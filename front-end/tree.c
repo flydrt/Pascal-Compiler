@@ -24,3 +24,16 @@ char * copyString(char * str) {
 	strcpy(result, str);
 	return result;
 }
+
+pTree createList(pTree p1, pTree p2) {
+	if (p1)
+	{
+		pTree p = p1;
+		while (p->child[0])
+			p = p->child[0];
+		p->child[0] = p2;
+		return p1;
+	}
+	else
+		return p2;
+}

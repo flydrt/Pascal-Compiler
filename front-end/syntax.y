@@ -121,21 +121,35 @@ type_decl : simple_type_decl { $$ = $1; }
 		  | record_type_decl { $$ = $1; }
 		  ;
 
-array_type_decl : ARRAY LB simple_type_decl RB OF type_decl
+array_type_decl : ARRAY LB simple_type_decl RB OF type_decl {
+                    $$ = newTreeNode(ARRAY_DECL);
+                    $$->child[1] = $3;
+                    $$->child[2] = $6;
+                }
 				;
 
-record_type_decl : RECORD field_decl_list END
+record_type_decl : RECORD field_decl_list END {
+                    $$ = $2;
+                 }
 				 ;
 
-field_decl_list : field_decl_list field_decl
-				| field_decl
+field_decl_list : field_decl_list field_decl {
+                    $$ = createList($1, $2);
+                }
+				| field_decl { $$ = $1; }
 				;
 
-field_decl : name_list COLON type_decl SEMI
+field_decl : name_list COLON type_decl SEMI {
+               $$ = newTreeNode(FIELD_DECL);
+               $$->child[1] = $1;
+               $$->child[2] = $3;
+           }
 		   ;
 
-name_list : name_list COMMA ID
-		  | ID
+name_list : name_list COMMA ID {
+              $$ = createList($1, $3);
+          }
+		  | ID { $$ = $1; }
 		  ;
 
 simple_type_decl : SYS_TYPE
@@ -147,15 +161,23 @@ simple_type_decl : SYS_TYPE
 				 | ID DOTDOT ID
 				 ;
 
-var_part : VAR var_decl_list
-		 |
+var_part : VAR var_decl_list {
+             $$ = $2;
+         }
+		 | { $$ = NULL; }
 		 ;
 
-var_decl_list : var_decl_list var_decl
-			  | var_decl
+var_decl_list : var_decl_list var_decl {
+                  $$ = createList($1, $2);
+              }
+			  | var_decl { $$ = $1; }
 			  ;
 
-var_decl : name_list COLON type_decl SEMI
+var_decl : name_list COLON type_decl SEMI {
+            $$ = newTreeNode(VAR_DECL);
+            $$->child[1] = $1;
+            $$->child[2] = $3;
+         }
 		 ;
 
 routine_part : routine_part function_decl {
@@ -271,24 +293,42 @@ stmt_list : stmt_list stmt SEMI {
 		  | { $$ = NULL; }
 		  ;
 
-stmt : INTEGER COLON non_label_stmt
-	 | non_label_stmt
+stmt : INTEGER COLON non_label_stmt {
+        $$ = newTreeNode(LABEL_STMT);
+        $$->child[1] = $1;
+        $$->child[2] = $3;
+     }
+	 | non_label_stmt { $$ = $1; }
 	 ;
 
-non_label_stmt : assign_stmt
-			   | proc_stmt
-			   | compound_stmt
-			   | if_stmt
-			   | repeat_stmt
-			   | while_stmt
-			   | for_stmt
-			   | case_stmt
-			   | goto_stmt
+non_label_stmt : assign_stmt { $$ = $1; }
+			   | proc_stmt { $$ = $1; }
+			   | compound_stmt { $$ = $1; }
+			   | if_stmt { $$ = $1; }
+			   | repeat_stmt { $$ = $1; }
+			   | while_stmt { $$ = $1; }
+			   | for_stmt { $$ = $1; }
+			   | case_stmt { $$ = $1; }
+			   | goto_stmt { $$ = $1; }
 			   ;
 
-assign_stmt : ID ASSIGN expression
-			| ID LB expression RB ASSIGN expression
-			| ID DOT ID ASSIGN expression
+assign_stmt : ID ASSIGN expression {
+                $$ = newTreeNode(ASSIGN_STMT_1);
+                $$->child[1] = $1;
+                $$->child[2] = $3;
+            }
+			| ID LB expression RB ASSIGN expression {
+                $$ = newTreeNode(ASSIGN_STMT_2);
+                $$->child[1] = $1;
+                $$->child[2] = $3;
+                $$->child[3] = $6;
+            }
+			| ID DOT ID ASSIGN expression {
+                $$ = newTreeNode(ASSIGN_STMT_3);
+                $$->child[1] = $1;
+                $$->child[2] = $3;
+                $$->child[3] = $5;
+            }
 			;
 
 proc_stmt : ID
@@ -301,67 +341,179 @@ proc_stmt : ID
 compound_stmt : PBEGIN stmt_list END { $$ = $2; }
 			  ;
 
-if_stmt : IF expression THEN stmt else_clause
+if_stmt : IF expression THEN stmt else_clause {
+            $$ = newTreeNode(IF_STMT);
+            $$->child[1] = $2;
+            $$->child[2] = $4;
+            $$->child[3] = $5;
+        }
 		;
 
-else_clause : ELSE stmt
-			|
+else_clause : ELSE stmt {
+                $$ = $2;
+            }
+			| { $$ = NULL; }
 			;
 
-repeat_stmt : REPEAT stmt_list UNTIL expression
+repeat_stmt : REPEAT stmt_list UNTIL expression {
+                $$ = newTreeNode(REPEAT_STMT);
+                $$->child[1] = $2;
+                $$->child[2] = $4;
+            }
+            ;
 
-while_stmt : WHILE expression DO stmt
+while_stmt : WHILE expression DO stmt {
+               $$ = newTreeNode(WHILE_STMT);
+               $$->child[1] = $2;
+               $$->child[2] = $4;
+           }
 		   ;
 
-for_stmt : FOR ID ASSIGN expression direction expression DO stmt
+for_stmt : FOR ID ASSIGN expression TO expression DO stmt {
+            $$ = newTreeNode(FOR_STMT_TO);
+            $$->child[1] = $2;
+            $$->child[2] = $4;
+            $$->child[3] = $6;
+            $$->chlid[4] = $8;
+         }
+         | FOR ID ASSIGN expression DOWNTO expression DO stmt {
+            $$ = newTreeNode(FOR_STMT_DOWNTO);
+            $$->child[1] = $2;
+            $$->child[2] = $4;
+            $$->child[3] = $6;
+            $$->chlid[4] = $8;
+         }
 		 ;
 
-direction : TO
-		  | DOWNTO
+case_stmt : CASE expression OF case_expr_list END {
+              $$ = newTreeNode(CASE_STMT);
+              $$->child[1] = $2;
+              $$->child[2] = $4;
+          }
 		  ;
 
-case_stmt : CASE expression OF case_expr_list END
-		  ;
-
-case_expr_list : case_expr_list case_expr
-			   | case_expr
+case_expr_list : case_expr_list case_expr {
+                   pTree p = $1;
+                   while(p->child[0])
+                       p = p->child[0];
+                   p->child[0] = $2;
+                   $$ = $1;
+               }
+			   | case_expr {
+                   $$ = $1;
+               }
 			   ;
 
-case_expr : const_value COLON stmt SEMI
-          | ID COLON stmt SEMI
+case_expr : const_value COLON stmt SEMI {
+              $$ = newTreeNode(CASE_EXPR_CONST);
+              $$->child[1] = $1;
+              $$->child[2] = $3;
+          }
+          | ID COLON stmt SEMI {
+              $$ = newTreeNode(CASE_EXPR_ID);
+              $$->child[1] = $1;
+              $$->child[2] = $3;
+          }
 		  ;
 
-goto_stmt : GOTO INTEGER
+goto_stmt : GOTO INTEGER {
+              $$ = newTreeNode(GOTO_STMT);
+              $$->child[1] = $2;
+          }
 		  ;
 
-expression_list : expression_list COMMA expression
-				| expression
+expression_list : expression_list COMMA expression {
+                    $$ = createList($1, $3);
+                }
+				| expression { $$ = $1; }
 				;
 
-expression : expression GE expr
-		   | expression GT expr
-		   | expression LE expr
-		   | expression LT expr
-		   | expression EQUAL expr
-		   | expression UNEQUAL expr
-		   | expr
+expression : expression GE expr {
+               $$ = newTreeNode(eGE);
+               $$->child[1] = $1;
+               $$->child[2] = $3;
+           }
+		   | expression GT expr {
+               $$ = newTreeNode(eGT);
+               $$->child[1] = $1;
+               $$->child[2] = $3;
+           }
+		   | expression LE expr {
+               $$ = newTreeNode(eLE);
+               $$->child[1] = $1;
+               $$->child[2] = $3;
+           }
+		   | expression LT expr {
+               $$ = newTreeNode(eLT);
+               $$->child[1] = $1;
+               $$->child[2] = $3;
+           }
+		   | expression EQUAL expr {
+               $$ = newTreeNode(eEQUAL);
+               $$->child[1] = $1;
+               $$->child[2] = $3;
+           }
+		   | expression UNEQUAL expr {
+               $$ = newTreeNode(eUNEQUAL);
+               $$->child[1] = $1;
+               $$->child[2] = $3;
+           }
+		   | expr {
+               $$ = $1;
+           }
 		   ;
 
-expr : expr PLUS term
-	 | expr MINUS term
-	 | expr OR term
-	 | term
+expr : expr PLUS term {
+        $$ = newTreeNode(ePLUS);
+        $$->child[1] = $1;
+        $$->child[2] = $3;
+     }
+	 | expr MINUS term {
+        $$ = newTreeNode(eMINUS);
+        $$->child[1] = $1;
+        $$->child[2] = $3;
+     }
+	 | expr OR term {
+        $$ = newTreeNode(eOR);
+        $$->child[1] = $1;
+        $$->child[2] = $3;
+     }
+	 | term {
+        $$ = $1;
+     }
 	 ;
 
-term : term MUL factor
-	 | term DIV factor
-	 | term MOD factor
-	 | term AND factor
-	 | factor
+term : term MUL factor {
+        $$ = newTreeNode(eMUL);
+        $$->child[1] = $1;
+        $$->child[2] = $3;
+     }
+	 | term DIV factor {
+        $$ = newTreeNode(eDIV);
+        $$->child[1] = $1;
+        $$->child[2] = $3;
+     }
+	 | term MOD factor {
+        $$ = newTreeNode(eMOD);
+        $$->child[1] = $1;
+        $$->child[2] = $3;
+     }
+	 | term AND factor {
+        $$ = newTreeNode(eAND);
+        $$->child[1] = $1;
+        $$->child[2] = $3;
+     }
+	 | factor {
+        $$ = $1;
+     }
 	 ;
 
-factor : ID
-	   | ID LP args_list RP
+factor : ID { $$ = $1; }
+	   | ID LP args_list RP {
+           $$ = newTreeNode(FACTOR_FUNC);
+           $$->child[1] = $1;
+           $$->child[2] = $3;
+       }
 	   | SYS_FUNCT
 	   | SYS_FUNCT LP args_list RP
 	   | const_value
@@ -372,8 +524,10 @@ factor : ID
 	   | ID DOT ID
 	   ;
 
-args_list : args_list COMMA expression
-		  | expression
+args_list : args_list COMMA expression {
+              $$ = createList($1, $3);
+          }
+		  | expression { $$ = $1; }
 		  ;
 
 %%

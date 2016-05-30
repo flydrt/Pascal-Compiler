@@ -23,5 +23,6 @@ typedef struct treeNode {
 
 pTree newTreeNode(Type type);
 char * copyString(char * str);
+pTree createList(pTree p1, pTree p2);
 
 #endif
