@@ -2,6 +2,13 @@
 
 pTree newTreeNode(Type type) {
 	pTree p = (pTree)malloc(sizeof(struct treeNode));
+	
+	int i;
+	for (i = 0; i < 5; ++i)
+	{
+		p->child[i] = NULL;
+	}
+
 	p->type = type;
 	switch(type) {
 		case tPROGRAM: p->num = 2; break;

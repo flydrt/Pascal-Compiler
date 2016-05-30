@@ -21,8 +21,8 @@ extern FILE * yyin;
 %%
 program : program_head routine DOT {
 			$$ = newTreeNode(tPROGRAM);
-			$$->child[0] = $1;
-			$$->child[1] = $2;
+			$$->child[1] = $1;
+			$$->child[2] = $2;
 		}
 		;
 
@@ -34,15 +34,15 @@ program_head : PROGRAM ID SEMI {
 
 routine : routine_head routine_body {
 			$$ = newTreeNode(tROUTINE);
-			$$->child[0] = $1;
-			$$->child[1] = $2;
+			$$->child[1] = $1;
+			$$->child[2] = $2;
 		}
 		;
 
 sub_routine : routine_head routine_body {
 				$$ = newTreeNode(tSUB_ROUTINE);
-				$$->child[0] = $1;
-				$$->child[1] = $2;
+				$$->child[1] = $1;
+				$$->child[2] = $2;
 			}
 			;
 
@@ -67,7 +67,6 @@ const_part : CONST const_expr_list {
 
 const_expr_list : const_expr_list ID EQUAL const_value SEMI {
 					pTree temp = newTreeNode(DECL_CONST);
-					temp->child[0] = NULL;
 					temp->child[1] = $2;
 					temp->child[2] = $4;
 					
@@ -80,7 +79,6 @@ const_expr_list : const_expr_list ID EQUAL const_value SEMI {
 				}
 				| ID EQUAL const_value SEMI {
 					$$ = newTreeNode(DECL_CONST);
-					$$->child[0] = NULL;
 					$$->child[1] = $1;
 					$$->child[2] = $3;
 				}
@@ -113,7 +111,6 @@ type_decl_list : type_decl_list type_definition {
 
 type_definition : ID EQUAL type_decl SEMI {
 					$$ = newTreeNode(DECL_TYPE);
-					$$->child[0] = NULL;
 					$$->child[1] = $1;
 					$$->child[2] = $3;
 				}
@@ -161,48 +158,117 @@ var_decl_list : var_decl_list var_decl
 var_decl : name_list COLON type_decl SEMI
 		 ;
 
-routine_part : routine_part function_decl
-			 | routine_part procedure_decl
-			 | function_decl
-			 | procedure_decl
-			 |
+routine_part : routine_part function_decl {
+                pTree p = $1;
+                if(p) {
+                    while(p->child[0])
+                        p = p->child[0];
+                    p->child[0] = $2;
+                    $$ = $1;
+                }
+                else
+                    $$ = $2;
+			 }
+			 | routine_part procedure_decl {
+                pTree p = $1;
+                if(p) {
+                    while(p->child[0])
+                        p = p->child[0];
+                    p->child[0] = $2;
+                    $$ = $1;
+                }
+                else
+                    $$ = $2;
+             }
+			 | function_decl {
+                $$ = $1;
+             }
+			 | procedure_decl {
+                $$ = $1;
+             }
+			 | { $$ = NULL; }
 			 ;
 
-function_decl : function_head SEMI sub_routine SEMI
+function_decl : function_head SEMI sub_routine SEMI {
+                  $$ = newTreeNode(FUNCTION_DECL);
+                  $$->child[1] = $1;
+                  $$->child[2] = $3;
+              }
 			  ;
 
-function_head : FUNCTION ID parameters COLON simple_type_decl
+function_head : FUNCTION ID parameters COLON simple_type_decl {
+                  $$ = newTreeNode(FUNCTION_HEAD);
+                  $$->child[1] = $2;
+                  $$->child[2] = $3;
+                  $$->child[3] = $5;
+              }
 			  ;
 
-procedure_decl : procedure_head SEMI sub_routine SEMI
+procedure_decl : procedure_head SEMI sub_routine SEMI {
+                   $$ = newTreeNode(PROCEDURE_DECL);
+                   $$->child[1] = $1;
+                   $$->child[2] = $3;
+               }
 			   ;
 
-procedure_head : PROCEDURE ID parameters
+procedure_head : PROCEDURE ID parameters {
+                   $$ = newTreeNode(PROCEDURE_HEAD);
+                   $$->child[1] = $2;
+                   $$->child[2] = $3;
+               }
 			   ;
 
-parameters : LP para_decl_list RP
-		   |
+parameters : LP para_decl_list RP {
+               $$ = $2;
+           }
+		   | { $$ = NULL; }
 		   ;
 
-para_decl_list : para_decl_list SEMI para_type_list
-			   | para_type_list
+para_decl_list : para_decl_list SEMI para_type_list {
+                   pTree p = $1;
+                   while(p->child[0])
+                       p = p->child[0];
+                   p->child[0] = $3;
+                   $$ = $1;
+               }
+			   | para_type_list {
+                   $$ = $1;
+               }
 			   ;
 
-para_type_list : var_para_list COLON simple_type_decl
-			   | val_para_list COLON simple_type_decl
+para_type_list : var_para_list COLON simple_type_decl {
+                   $$ = newTreeNode(VAR_PARA);
+                   $$->child[1] = $1;
+                   $$->child[2] = $3;
+               }
+			   | val_para_list COLON simple_type_decl {
+                   $$ = newTreeNode(VAL_PARA);
+                   $$->child[1] = $1;
+                   $$->child[2] = $3;
+               }
 			   ;
 
-var_para_list : VAR name_list
+var_para_list : VAR name_list { $$ = $2; }
 			  ;
 
-val_para_list : name_list
+val_para_list : name_list { $$ = $1; }
 			  ;
 
-routine_body : compound_stmt
+routine_body : compound_stmt { $$ = $1; }
 			 ;
 
-stmt_list : stmt_list stmt SEMI
-		  |
+stmt_list : stmt_list stmt SEMI {
+              pTree p = $1;
+              if(p) {
+                  while(p->child[0])
+                      p = p->child[0];
+                  p->child[0] = $2;
+                  $$ = $1;
+              }
+              else
+                  $$ = $2;
+          }
+		  | { $$ = NULL; }
 		  ;
 
 stmt : INTEGER COLON non_label_stmt
@@ -232,7 +298,7 @@ proc_stmt : ID
           | READ LP factor RP
 		  ;
 
-compound_stmt : PBEGIN stmt_list END
+compound_stmt : PBEGIN stmt_list END { $$ = $2; }
 			  ;
 
 if_stmt : IF expression THEN stmt else_clause
