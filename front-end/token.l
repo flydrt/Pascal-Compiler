@@ -78,10 +78,31 @@ sys_proc "write"|"writeln"
 "var"       {return VAR;}
 "function"  {return FUNCTION;}
 "procedure" {return PROCEDURE;}
-{number}    {return INTEGER;}
-{real}      {return REAL;}
-{char}      {return CHAR;}
-{string}    {return STRING;}
+
+{number}    {
+    yylval = newTreeNode(tINTEGER);
+	(yylval->data).intVal = atoi(yytext);
+    return INTEGER;
+}
+{real}      {
+    yylval = newTreeNode(tREAL);
+	(yylval->data).realVal = atof(yytext);
+    return REAL;
+}
+{char}      {
+    yylval = newTreeNode(tCHAR);
+	(yylval->data).charVal = yytext[1];
+    return CHAR;
+}
+{string}    {
+    yylval = newTreeNode(tSTRING);
+    char temp[255];
+    strcpy(temp, yytext+1);
+    temp[strlen(yytext) - 2] = '\0';
+	(yylval->data).stringVal = copyString(temp);
+    return STRING;
+}
+
 {identifier} {
 	yylval = newTreeNode(tID);
 	(yylval->data).stringVal = copyString(yytext);

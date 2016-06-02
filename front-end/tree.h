@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 typedef enum Type {
-	tPROGRAM, tPROGRAM_HEAD, tROUTINE, tSUB_ROUTINE, tROUTINE_HEAD,
+	tPROGRAM, tROUTINE, tSUB_ROUTINE, tROUTINE_HEAD,
 	tID,
 	DECL_CONST, DECL_TYPE
 } Type;

@@ -28,7 +28,6 @@ program : program_head routine DOT {
 
 program_head : PROGRAM ID SEMI {
 				$$ = $2;
-				$$->type = tPROGRAM_HEAD;
 			 }
 			 ;
 
@@ -66,7 +65,7 @@ const_part : CONST const_expr_list {
 		   ;
 
 const_expr_list : const_expr_list ID EQUAL const_value SEMI {
-					pTree temp = newTreeNode(DECL_CONST);
+					pTree temp = newTreeNode(CONST_DECL);
 					temp->child[1] = $2;
 					temp->child[2] = $4;
 					
@@ -78,7 +77,7 @@ const_expr_list : const_expr_list ID EQUAL const_value SEMI {
 					$$ = $1;
 				}
 				| ID EQUAL const_value SEMI {
-					$$ = newTreeNode(DECL_CONST);
+					$$ = newTreeNode(CONST_DECL);
 					$$->child[1] = $1;
 					$$->child[2] = $3;
 				}
@@ -110,7 +109,7 @@ type_decl_list : type_decl_list type_definition {
 			   ;
 
 type_definition : ID EQUAL type_decl SEMI {
-					$$ = newTreeNode(DECL_TYPE);
+					$$ = newTreeNode(TYPE_DECL);
 					$$->child[1] = $1;
 					$$->child[2] = $3;
 				}
