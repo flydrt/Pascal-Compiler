@@ -24,7 +24,11 @@ sys_proc "write"|"writeln"
 
 {sys_funct} { return SYS_FUNCT; }
 {sys_con} { return SYS_CON; }
-{sys_type} { return SYS_TYPE; }
+{sys_type} {
+    yylval = newTreeNode(tSYS_TYPE);
+	(yylval->data).stringVal = copyString(yytext);
+    return SYS_TYPE;
+}
 {sys_proc} { return SYS_PROC; }
 
 "program"   {return PROGRAM;}

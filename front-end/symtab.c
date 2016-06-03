@@ -3,8 +3,9 @@
 #include <stdlib.h>
 #include "symtab.h"
 
-void traverseSyntaxTree(pTree root) {
-	initSymTabStack();
+pSymNode traverseSyntaxTree(pTree root) {
+	if (root == NULL)
+		return NULL;
 
 	switch(root->type) {
 		case tPROGRAM: {
@@ -21,20 +22,27 @@ void traverseSyntaxTree(pTree root) {
 		}
 		case tROUTINE: {
 			traverseSyntaxTree(root->child[1]);
+			// if(root->child[2] == NULL)
+			// 	printf("NO!");
 			traverseSyntaxTree(root->child[2]);
 			break;
 		}
 		case tROUTINE_HEAD: {
-			if (root->child[0])
-				traverseSyntaxTree(root->child[0]);
-			if (root->child[1])
-				traverseSyntaxTree(root->child[1]);
-			if (root->child[2])
-				traverseSyntaxTree(root->child[2]);
-			if (root->child[3])
-				traverseSyntaxTree(root->child[3]);
-			if (root->child[4])
-				traverseSyntaxTree(root->child[4]);
+			// if(root->child[0] == NULL)
+			// 	printf("0");
+			// if(root->child[1] == NULL)
+			// 	printf("1");
+			// if(root->child[2] == NULL)
+			// 	printf("2");
+			// if(root->child[3] == NULL)
+			// 	printf("3");
+			// if(root->child[4] == NULL)
+			// 	printf("4");
+			traverseSyntaxTree(root->child[0]);
+			traverseSyntaxTree(root->child[1]);
+			traverseSyntaxTree(root->child[2]);
+			traverseSyntaxTree(root->child[3]);
+			traverseSyntaxTree(root->child[4]);
 			break;
 		}
 		case CONST_DECL: {
@@ -43,32 +51,67 @@ void traverseSyntaxTree(pTree root) {
 				//double define error
 				//To do
 			}
-			if (root->child[0])
-				traverseSyntaxTree(root->child[0]);
+			traverseSyntaxTree(root->child[0]);
 			break;
 		}
-		case TYPE_DECL: {
-			//To do
-			pSymNode p = newSymNode(root, TYPE_TYPE);
-			if(insertSymNode(p)) {
-				//double define error
-				//To do
-			}
-			if (root->child[0])
-				traverseSyntaxTree(root->child[0]);
-			break;
+		// case TYPE_DECL: {
+		// 	pSymNode p = newSymNode(root, TYPE_TYPE);
+		// 	if(insertSymNode(p)) {
+		// 		//double define error
+		// 		//To do
+		// 	}
+		// 	traverseSyntaxTree(root->child[0]);
+		// 	break;
+		// }
+		// case VAR_DECL: {
+		// 	pSymNode temp = traverseSyntaxTree(root->child[2]);
+		// 	newAndInsertSymNode(root->child[1], TYPE_VAR, temp);
+		// 	traverseSyntaxTree(root->child[0]);
+		// 	break;
+		// }
+		// case tSUB_ROUTINE: {
+		// 	traverseSyntaxTree(root->child[1]);
+		// 	traverseSyntaxTree(root->child[2]);
+		// 	break;
+		// }
+
+		//simple_type_decl
+		case tSYS_TYPE: {
+			pSymNode p = (pSymNode)malloc(sizeof(SymNode));
+			char * s = (root->data).stringVal;
+			if(!strcmp(s, "integer"))
+				p->attr = ATTR_INTEGER;
+			else if(!strcmp(s, "real"))
+				p->attr = ATTR_REAL;
+			else if(!strcmp(s, "char"))
+				p->attr = ATTR_CHAR;
+			else if(!strcmp(s, "string"))
+				p->attr = ATTR_STRING;
+			return p;
 		}
-		case tSUB_ROUTINE: {
-			traverseSyntaxTree(root->child[1]);
-			traverseSyntaxTree(root->child[2]);
-			break;
+		case tSIMPLE_ID: {
+			// if(searchID((root->data).stringVal)) {
+			// 	;
+			// }
+			// else {
+			// 	//can't find type identifier
+			// }
+			// return p;
 		}
+
 		default: break;
 	}
+
+	return NULL;
+}
+
+pSymNode searchID(char * name) {
+	return NULL;
 }
 
 pSymNode newSymNode(pTree ptr, IDType t) {
 	pSymNode p = (pSymNode)malloc(sizeof(SymNode));
+	p->next = NULL;
 	p->type = t;
 
 	switch(t) {
@@ -78,6 +121,7 @@ pSymNode newSymNode(pTree ptr, IDType t) {
 		}
 		case TYPE_CONST: {
 			strcpy(p->name, (ptr->child[1]->data).stringVal);
+			// printf("%s\n", p->name);
 			switch(ptr->child[2]->type) {
 				case tINTEGER: {
 					(p->v).i = (ptr->child[2]->data).intVal;
@@ -98,7 +142,9 @@ pSymNode newSymNode(pTree ptr, IDType t) {
 			}
 			break;
 		}
-		case TYPE_VAR:
+		case TYPE_VAR: {
+
+		}
 		case TYPE_PROG: {
 			strcpy(p->name, (ptr->data).stringVal);
 			break;
@@ -113,6 +159,22 @@ pSymNode newSymNode(pTree ptr, IDType t) {
 	}
 
 	return p;
+}
+
+void newAndInsertSymNode(pTree ptr, IDType t, pSymNode temp) {
+	while (ptr) {
+		pSymNode p = (pSymNode)malloc(sizeof(SymNode));
+		p->next = NULL;
+		strcpy(p->name, (ptr->data).stringVal);
+		p->type = t;
+		p->attr = temp->attr;
+		if(insertSymNode(p)) {
+			//double define error
+			//To do
+		}
+		ptr = ptr->child[0];
+	}
+	free(temp);
 }
 
 void initSymTabStack() {
@@ -177,17 +239,23 @@ int insertSymNode(pSymNode p) {
 
 		p->next = temp;
 		((symTabStack.top)->node)[hash(p->name)] = p;
+		
 	}
-	else
+	else {
+		printf("must!\n");
 		((symTabStack.top)->node)[hash(p->name)] = p;
+	}
 
 	return 0;
 }
 
-int main() {
-	pSymNode *p = newHashTab();
-	SymNode s;
-	p[3] = &s;
-	strcpy(p[3]->name, "zzz\n");
-	printf("%s", p[3]->name);
+void printSymTab() {
+	int i;
+	for (i = 0; i < HASHTAB_SIZE; i++) {
+		pSymNode temp = (symTabStack.top)->node[i];
+		while(temp) {
+			printf("%s pp\n", temp->name);
+			temp = temp->next;
+		}
+	}
 }

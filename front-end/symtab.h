@@ -10,6 +10,12 @@ typedef enum idType {
 	TYPE_TYPE
 } IDType;
 
+typedef enum idAttr {
+	ATTR_INTEGER, ATTR_REAL, ATTR_CHAR, ATTR_STRING,
+	ATTR_ENUM, ATTR_SUBR,
+	ATTR_ARRAY, ATTR_RECORD
+} IDAttr;
+
 #define NAME_LEN 255
 #define HASHTAB_SIZE 101
 typedef enum { false, true } bool;
@@ -25,6 +31,7 @@ typedef union value {
 typedef struct symNode {
 	char name[NAME_LEN];
 	IDType type;
+	IDAttr attr;
 	Value v;
 	struct symNode * next;
 } SymNode, *pSymNode;
@@ -38,17 +45,19 @@ struct stack {
 	pTabNode top;
 } symTabStack;
 
+pSymNode traverseSyntaxTree(pTree root);
+pSymNode searchID(char * name);
+pSymNode newSymNode(pTree ptr, IDType t);
+void newAndInsertSymNode(pTree ptr, IDType t, pSymNode temp);
+
 void initSymTabStack();
 void pushSymTab(pSymNode * p);
 void popSymTab();
-void traverseSyntaxTree(pTree root);
-pSymNode newSymNode(pTree ptr, IDType t);
+
 pSymNode * newHashTab();
 int hash(char *s);
-void insertSymNode(pSymNode p);
-
-//interface for code generation
-
-//end
+int isDoubleDefined(pSymNode t, pSymNode p);
+int insertSymNode(pSymNode p);
+void printSymTab();
 
 #endif

@@ -1,5 +1,6 @@
 program hello;
+const ccc = 123;
 
-Begin
+begin
 
 end.

@@ -2,6 +2,8 @@
 #define TREE_H
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 typedef enum Type {
 	tPROGRAM, tROUTINE, tSUB_ROUTINE, tROUTINE_HEAD,
@@ -14,12 +16,14 @@ typedef enum Type {
 	eGE, eGT, eLE, eLT, eEQUAL, eUNEQUAL,
 	ePLUS, eMINUS, eOR, eMUL, eDIV, eMOD, eAND,
 	FACTOR_FUNC,
+	tSYS_TYPE, tSIMPLE_ID, tSIMPLE_ENUM, tSIMPLE_SUBRANGE,
+	tSIMPLE_SUBRANGE_1, tSIMPLE_SUBRANGE_2,
 	tINTEGER, tREAL, tCHAR, tSTRING, tID
 } Type;
 
 typedef struct treeNode {
 	Type type;
-	int num;
+	// int num;
 	union {
 		int intVal;
 		double realVal;
@@ -32,5 +36,7 @@ typedef struct treeNode {
 pTree newTreeNode(Type type);
 char * copyString(char * str);
 pTree createList(pTree p1, pTree p2);
+void printSyntaxTree(pTree root);
+pTree parse();
 
 #endif

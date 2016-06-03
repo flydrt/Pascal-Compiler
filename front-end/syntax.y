@@ -5,7 +5,9 @@
 
 %{
 #include <stdio.h>
+#include "tree.h"
 extern FILE * yyin;
+static pTree root;
 %}
 
 %token DOT PROGRAM ID SEMI CONST EQUAL
@@ -23,6 +25,7 @@ program : program_head routine DOT {
 			$$ = newTreeNode(tPROGRAM);
 			$$->child[1] = $1;
 			$$->child[2] = $2;
+            root = $$;
 		}
 		;
 
@@ -151,13 +154,35 @@ name_list : name_list COMMA ID {
 		  | ID { $$ = $1; }
 		  ;
 
-simple_type_decl : SYS_TYPE
-				 | ID
-				 | LP name_list RP
-				 | const_value DOTDOT const_value
-				 | MINUS const_value DOTDOT const_value
-				 | MINUS const_value DOTDOT MINUS const_value
-				 | ID DOTDOT ID
+simple_type_decl : SYS_TYPE { $$ = $1; }
+				 | ID {
+                    $$ = $1;
+                    $$->type = tSIMPLE_ID;
+                 }
+				 | LP name_list RP {
+                    $$ = newTreeNode(tSIMPLE_ENUM);
+                    $$->child[1] = $2;
+                 }
+				 | const_value DOTDOT const_value {
+                    $$ = newTreeNode(tSIMPLE_SUBRANGE);
+                    $$->child[1] = $1;
+                    $$->child[2] = $3;
+                 }
+				 | MINUS const_value DOTDOT const_value {
+                    $$ = newTreeNode(tSIMPLE_SUBRANGE_1);
+                    $$->child[1] = $2;
+                    $$->child[2] = $4;
+                 }
+				 | MINUS const_value DOTDOT MINUS const_value {
+                    $$ =newTreeNode(tSIMPLE_SUBRANGE_2);
+                    $$->child[1] = $2;
+                    $$->child[2] = $5;
+                 }
+				 | ID DOTDOT ID {
+                    $$ =newTreeNode(tSIMPLE_SUBRANGE);
+                    $$->child[1] = $1;
+                    $$->child[2] = $3;
+                 }
 				 ;
 
 var_part : VAR var_decl_list {
@@ -373,14 +398,14 @@ for_stmt : FOR ID ASSIGN expression TO expression DO stmt {
             $$->child[1] = $2;
             $$->child[2] = $4;
             $$->child[3] = $6;
-            $$->chlid[4] = $8;
+            $$->child[4] = $8;
          }
          | FOR ID ASSIGN expression DOWNTO expression DO stmt {
             $$ = newTreeNode(FOR_STMT_DOWNTO);
             $$->child[1] = $2;
             $$->child[2] = $4;
             $$->child[3] = $6;
-            $$->chlid[4] = $8;
+            $$->child[4] = $8;
          }
 		 ;
 
@@ -531,6 +556,7 @@ args_list : args_list COMMA expression {
 
 %%
 
+/*
 int main() {
 	char FILENAME[100];
     printf("Please input the test file: ");
@@ -538,7 +564,19 @@ int main() {
     FILE* file = fopen(FILENAME, "r");
     yyin = file;
 
-	return yyparse();
+	yyparse();
+
+    return 0;
+}
+*/
+
+pTree parse() {
+    FILE* file = fopen("txt", "r");
+    yyin = file;
+    
+    yyparse();
+
+    return root;
 }
 
 int yyerror(char* s) {

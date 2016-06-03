@@ -10,11 +10,11 @@ pTree newTreeNode(Type type) {
 	}
 
 	p->type = type;
-	switch(type) {
-		case tPROGRAM: p->num = 2; break;
-		case tPROGRAM_HEAD: p->num = 3; break;
-		default : break;
-	}
+	// switch(type) {
+	// 	case tPROGRAM: p->num = 2; break;
+	// 	case tPROGRAM_HEAD: p->num = 3; break;
+	// 	default : break;
+	// }
 	
 	return p;
 }
@@ -36,4 +36,8 @@ pTree createList(pTree p1, pTree p2) {
 	}
 	else
 		return p2;
+}
+
+void printSyntaxTree(pTree root) {
+	// printf("%u", root->type);
 }
