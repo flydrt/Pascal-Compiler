@@ -47,4 +47,8 @@ pSymNode * newHashTab();
 int hash(char *s);
 void insertSymNode(pSymNode p);
 
+//interface for code generation
+
+//end
+
 #endif
