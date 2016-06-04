@@ -9,7 +9,7 @@ digit [0-9]
 real {digit}+\.{digit}+
 number {digit}+
 letter [a-zA-Z]
-identifier {letter}+
+identifier [a-z]([_a-z0-9])*
 newline \n
 whitespace [ \t]+
 char \'.\'

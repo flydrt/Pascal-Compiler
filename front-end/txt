@@ -1,5 +1,11 @@
 program hello;
-const ccc = 123;
+const
+    cc98 = 123;
+    zz_21 = 'd';
+
+var
+    a_, b: char;
+    c, d: string;
 
 begin
 

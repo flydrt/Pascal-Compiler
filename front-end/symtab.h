@@ -17,7 +17,7 @@ typedef enum idAttr {
 } IDAttr;
 
 #define NAME_LEN 255
-#define HASHTAB_SIZE 101
+#define HASHTAB_SIZE 31
 typedef enum { false, true } bool;
 
 typedef union value {
@@ -58,6 +58,8 @@ pSymNode * newHashTab();
 int hash(char *s);
 int isDoubleDefined(pSymNode t, pSymNode p);
 int insertSymNode(pSymNode p);
+
 void printSymTab();
+void printAttr(IDAttr attr);
 
 #endif

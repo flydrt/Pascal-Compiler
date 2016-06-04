@@ -54,26 +54,23 @@ pSymNode traverseSyntaxTree(pTree root) {
 			traverseSyntaxTree(root->child[0]);
 			break;
 		}
-		// case TYPE_DECL: {
-		// 	pSymNode p = newSymNode(root, TYPE_TYPE);
-		// 	if(insertSymNode(p)) {
-		// 		//double define error
-		// 		//To do
-		// 	}
-		// 	traverseSyntaxTree(root->child[0]);
-		// 	break;
-		// }
-		// case VAR_DECL: {
-		// 	pSymNode temp = traverseSyntaxTree(root->child[2]);
-		// 	newAndInsertSymNode(root->child[1], TYPE_VAR, temp);
-		// 	traverseSyntaxTree(root->child[0]);
-		// 	break;
-		// }
-		// case tSUB_ROUTINE: {
-		// 	traverseSyntaxTree(root->child[1]);
-		// 	traverseSyntaxTree(root->child[2]);
-		// 	break;
-		// }
+		case TYPE_DECL: {
+			pSymNode temp = traverseSyntaxTree(root->child[2]);
+			newAndInsertSymNode(root->child[1], TYPE_TYPE, temp);
+		 	traverseSyntaxTree(root->child[0]);
+		 	break;
+		}
+		case VAR_DECL: {
+		 	pSymNode temp = traverseSyntaxTree(root->child[2]);
+		 	newAndInsertSymNode(root->child[1], TYPE_VAR, temp);
+		 	traverseSyntaxTree(root->child[0]);
+		 	break;
+		}
+		case tSUB_ROUTINE: {
+		 	traverseSyntaxTree(root->child[1]);
+			traverseSyntaxTree(root->child[2]);
+		 	break;
+		}
 
 		//simple_type_decl
 		case tSYS_TYPE: {
@@ -207,11 +204,11 @@ pSymNode * newHashTab() {
 }
 
 int hash(char *s) {
-	int x;
+	int x = 0;
 
 	for (; *s; s++)
 	{
-		x = x * 31 + *s;
+		x = x * 7 + *s;
 	}
 
 	return x % HASHTAB_SIZE;
@@ -242,7 +239,6 @@ int insertSymNode(pSymNode p) {
 		
 	}
 	else {
-		printf("must!\n");
 		((symTabStack.top)->node)[hash(p->name)] = p;
 	}
 
@@ -254,8 +250,35 @@ void printSymTab() {
 	for (i = 0; i < HASHTAB_SIZE; i++) {
 		pSymNode temp = (symTabStack.top)->node[i];
 		while(temp) {
-			printf("%s pp\n", temp->name);
+			printf("%s ", temp->name);
+			switch (temp->type) {
+				case TYPE_UNKNOWN: printf("UNKNOWN"); break;
+				case TYPE_CONST: printf("CONST"); break;
+				case TYPE_VAR: printf("VAR "); printAttr(temp->attr); break;
+				case TYPE_PROG: printf("PROG"); break;
+				case TYPE_PROC: printf("PROC"); break;
+				case TYPE_FUNC: printf("FUNC"); break;
+				case TYPE_ENUM: printf("ENUM"); break;
+				case TYPE_SUBR: printf("SUBR"); break;
+				case TYPE_RECORD: printf("RECORD"); break;
+				case TYPE_TYPE: printf("TYPE "); printAttr(temp->attr); break;
+				default: break;
+			}
+			printf("\n");
 			temp = temp->next;
 		}
+	}
+}
+
+void printAttr(IDAttr attr) {
+	switch (attr) {
+		case ATTR_INTEGER: printf("integer"); break;
+		case ATTR_REAL: printf("real"); break;
+		case ATTR_CHAR: printf("char"); break;
+		case ATTR_STRING: printf("string"); break;
+		case ATTR_ENUM: printf("enum"); break;
+		case ATTR_SUBR: printf("subr"); break;
+		case ATTR_ARRAY: printf("array"); break;
+		case ATTR_RECORD: printf("record"); break;
 	}
 }
