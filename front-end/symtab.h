@@ -28,12 +28,23 @@ typedef union value {
 	bool b;
 } Value;
 
+struct symNode;
+
+typedef struct typeAttr {
+	IDAttr attr;
+	int num;
+	struct symNode * first;
+	struct symNode * last;
+} TypeAttr, *pTypeAttr;
+
 typedef struct symNode {
 	char name[NAME_LEN];
 	IDType type;
 	IDAttr attr;
 	Value v;
-	struct symNode * next;
+	pTypeAttr link;
+	struct symNode * next_link;  // for enum
+	struct symNode * next;       // for hash conflict
 } SymNode, *pSymNode;
 
 typedef struct tabNode {
@@ -48,7 +59,9 @@ struct stack {
 pSymNode traverseSyntaxTree(pTree root);
 pSymNode searchID(char * name);
 pSymNode newSymNode(pTree ptr, IDType t);
-void newAndInsertSymNode(pTree ptr, IDType t, pSymNode temp);
+void newAndInsertSymNode(pTree ptr, IDType t);
+
+pSymNode newEmptySymbol();
 
 void initSymTabStack();
 void pushSymTab(pSymNode * p);
@@ -60,6 +73,9 @@ int isDoubleDefined(pSymNode t, pSymNode p);
 int insertSymNode(pSymNode p);
 
 void printSymTab();
+void printSymNode(pSymNode temp);
 void printAttr(IDAttr attr);
+int isSimpleType(IDAttr attr);
+void printSymLink(IDAttr attr, pTypeAttr link);
 
 #endif

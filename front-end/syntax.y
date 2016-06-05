@@ -169,17 +169,20 @@ simple_type_decl : SYS_TYPE { $$ = $1; }
                     $$->child[2] = $3;
                  }
 				 | MINUS const_value DOTDOT const_value {
-                    $$ = newTreeNode(tSIMPLE_SUBRANGE_1);
+                    $$ = newTreeNode(tSIMPLE_SUBRANGE);
                     $$->child[1] = $2;
+                    ($$->child[1]->data).intVal *= -1;
                     $$->child[2] = $4;
                  }
 				 | MINUS const_value DOTDOT MINUS const_value {
-                    $$ =newTreeNode(tSIMPLE_SUBRANGE_2);
+                    $$ =newTreeNode(tSIMPLE_SUBRANGE);
                     $$->child[1] = $2;
+                    ($$->child[1]->data).intVal *= -1;
                     $$->child[2] = $5;
+                    ($$->child[2]->data).intVal *= -1;
                  }
 				 | ID DOTDOT ID {
-                    $$ =newTreeNode(tSIMPLE_SUBRANGE);
+                    $$ =newTreeNode(tSIMPLE_SUBRANGE_ID);
                     $$->child[1] = $1;
                     $$->child[2] = $3;
                  }

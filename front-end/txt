@@ -1,11 +1,28 @@
 program hello;
 const
-    cc98 = 123;
-    zz_21 = 'd';
+    a = 'c';
+    b = "dsaf";
+    c = 123;
+    d = 1.4;
+
+type
+    e = real;
+    f = integer;
+    g = record
+        a : real;
+        b : integer;
+        c : array [-1..4] of string;
+    end;
+    h = array [1..3] of string;
+    i = (what, is, how);
 
 var
-    a_, b: char;
-    c, d: string;
+    o : string;
+    p, q : g;
+    r : h;
+    s : e;
+    t, u : (AA, BB, CC, DD, EE);
+    v : i;
 
 begin
 

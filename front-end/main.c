@@ -1,6 +1,11 @@
 #include "tree.h"
 #include "symtab.h"
 
+TypeAttr tempTypeAttr;
+pTypeAttr tempTA = &tempTypeAttr;
+SymNode tempSymNode;
+pSymNode tempSN = &tempSymNode;
+
 extern struct stack symTabStack;
 
 int main() {
