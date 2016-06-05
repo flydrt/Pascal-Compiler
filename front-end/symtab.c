@@ -46,6 +46,85 @@ pSymNode traverseSyntaxTree(pTree root) {
 			traverseSyntaxTree(root->child[4]);
 			break;
 		}
+
+		case FUNCTION_DECL: {
+			pSymNode *hashtab = newHashTab();
+			pushSymTab(hashtab);
+			traverseSyntaxTree(root->child[1]);
+			traverseSyntaxTree(root->child[2]);
+			traverseSyntaxTree(root->child[0]);
+			break;
+		}
+		case PROCEDURE_DECL: {
+			traverseSyntaxTree(root->child[1]);
+			traverseSyntaxTree(root->child[2]);
+			traverseSyntaxTree(root->child[0]);
+			break;
+		}
+
+		case FUNCTION_HEAD: {
+			pSymNode p = traverseSyntaxTree(root->child[3]);
+			p->type = TYPE_FUNC;
+			strcpy(p->name, root->child[1]->data.stringVal);
+
+			pTree temp = root->child[2];
+			pSymNode last = NULL;
+			while (temp) {
+				pSymNode t = traverseSyntaxTree(temp);
+
+				if (p->argc == 0) {
+					p->next_link = t;
+				}
+				else {
+					last->next_link = t;
+				}
+
+				p->argc += t->argc;
+
+				while (t->next_link) {
+					t = t->next_link;
+				}
+				last = t;
+
+				temp = temp->child[0];
+			}
+			if (insertSymNode(p)) {
+				//To do
+			}
+			break;
+		}
+		case VAR_PARA:
+		case VAL_PARA: {
+			pSymNode varParaType = traverseSyntaxTree(root->child[2]);
+			pTree temp = root->child[1];
+			pSymNode first = NULL, last = NULL;
+			while (temp) {
+				pSymNode p = newEmptySymbol();
+				p->type = (root->type == VAR_PARA)? TYPE_VARPARA : TYPE_VALPARA;
+				p->attr = varParaType->attr;
+				p->link = varParaType->link;
+				strcpy(p->name, temp->data.stringVal);
+
+				if (first == NULL) {
+					first = p;
+				}
+
+				first->argc++;
+				if (first->argc > 1) {
+					last->next_link = p;
+				}
+
+				if (insertSymNode(p)) {
+					//To do
+				}
+
+				last = p;
+				temp = temp->child[0];
+			}
+			return first;
+		}
+
+		//decl
 		case CONST_DECL: {
 			pSymNode p = newSymNode(root, TYPE_CONST);
 			if(insertSymNode(p)) {
@@ -279,12 +358,18 @@ pSymNode traverseSyntaxTree(pTree root) {
 }
 
 pSymNode searchID(char * name) {
-	pSymNode temp = ((symTabStack.top)->node)[hash(name)];
+	pTabNode tempTab = symTabStack.top;
 
-	while (temp) {
-		if (!strcmp(temp->name, name))
-			return temp;
-		temp = temp->next;
+	while (tempTab) {
+		pSymNode temp = tempTab->node[hash(name)];
+
+		while (temp) {
+			if (!strcmp(temp->name, name))
+				return temp;
+			temp = temp->next;
+		}
+
+		tempTab = tempTab->next;
 	}
 
 	return NULL;
@@ -294,6 +379,8 @@ pSymNode newEmptySymbol() {
 	pSymNode result = (pSymNode) malloc(sizeof(SymNode));
 	result->next = NULL;
 	result->type = TYPE_UNKNOWN;
+	result->argc = 0;
+	result->next_link = NULL;
 	result->link = (pTypeAttr)malloc(sizeof(TypeAttr));
 	result->link->num = 0;
 	result->link->first = NULL;
@@ -504,6 +591,15 @@ void printSymNode(pSymNode temp) {
 		}
 		case TYPE_FUNC: {
 			printf("FUNC");
+			printf(" %d ", temp->argc);
+			printAttr(temp->attr);
+			if (temp->next_link)
+				temp = temp->next_link;
+			while (temp) {
+				printf("\n--- ");
+				printSymNode(temp);
+				temp = temp->next_link;
+			}
 			break;
 		}
 		case TYPE_ENUM: {
@@ -530,8 +626,23 @@ void printSymNode(pSymNode temp) {
 			}
 			break;
 		}
-		default:
+		case TYPE_VARPARA: {
+			printf("VAR_PARA ");
+			printAttr(temp->attr);
+			if (!isSimpleType(temp->attr)) {
+				printSymLink(temp->attr, temp->link);
+			}
 			break;
+		}
+		case TYPE_VALPARA: {
+			printf("VAL_PARA ");
+			printAttr(temp->attr);
+			if (!isSimpleType(temp->attr)) {
+				printSymLink(temp->attr, temp->link);
+			}
+			break;
+		}
+		default: break;
 	}
 }
 
