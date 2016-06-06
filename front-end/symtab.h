@@ -35,6 +35,7 @@ typedef struct typeAttr {
 	int num;
 	struct symNode * first;
 	struct symNode * last;
+	struct typeAttr * attrLink;
 } TypeAttr, *pTypeAttr;
 
 typedef struct symNode {
@@ -59,9 +60,6 @@ struct stack {
 
 pSymNode traverseSyntaxTree(pTree root);
 pSymNode searchID(char * name);
-pSymNode newSymNode(pTree ptr, IDType t);
-void newAndInsertSymNode(pTree ptr, IDType t);
-
 pSymNode newEmptySymbol();
 
 void initSymTabStack();
@@ -72,11 +70,6 @@ pSymNode * newHashTab();
 int hash(char *s);
 int isDoubleDefined(pSymNode t, pSymNode p);
 int insertSymNode(pSymNode p);
-
-void printSymTab();
-void printSymNode(pSymNode temp);
-void printAttr(IDAttr attr);
-int isSimpleType(IDAttr attr);
-void printSymLink(IDAttr attr, pTypeAttr link);
+int insertSymNode2PreviousTab(pSymNode p);
 
 #endif

@@ -11,6 +11,8 @@
       <sourceFolder url="file://$MODULE_DIR$/syntax.tab.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tree.c" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tree.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/util.c" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/util.h" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
