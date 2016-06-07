@@ -10,10 +10,8 @@
 #include <string.h>
 #include "tree.h"
 #include <stdlib.h>
+#include "dag.h"
 
-struct dag *new_node(Type type,int num,pTree child0,pTree child1,pTree child2,pTree child3,pTree child4,pTree parent);
-pTree traverse(pTree syntax);
-int get_num(Type type);
 
 /* hash function. */
 int node_hash(int num){
@@ -28,7 +26,67 @@ static struct dag
 }
 *hash[16];
 
+struct dag *head,*tail;
+int size = 0;
+void add_queue(pTree node){
+    
+    struct dag *tmp2;
+    if(node == NULL)
+        return;
+    tmp2 = (struct dag *)malloc(sizeof(struct dag));
+    
+    tmp2->node = node;
+    tmp2->hlink = NULL;
+    if(size == 0){
+        head = tail = tmp2;
+    }
+    else{
+        tail->hlink = tmp2;
+        tail = tmp2;
+    }
+    size++;
+    
+}
+void initial_print_dag(pTree mydag){
+   
+    head = (struct dag *)malloc(sizeof(struct dag));
+    tail = (struct dag *)malloc(sizeof(struct dag));
+    head->hlink = NULL;
+    tail->hlink = NULL;
+    head->node = mydag;
+    tail->node = mydag;
+    print_dag(mydag);
+}
 
+pTree get_head(){
+    
+    struct dag *tmp3;
+    if(head == NULL)
+        return NULL;
+    tmp3 = head;
+    head = head->hlink ;
+    size--;
+   // head = tmp3;
+    return tmp3->node;
+}
+void print_dag(pTree mydag){
+    
+    pTree h;
+    //head = tail =NULL;
+    
+    if(mydag == NULL)
+        return;
+    add_queue(mydag->child[0]);
+    add_queue(mydag->child[1]);
+    add_queue(mydag->child[2]);
+    add_queue(mydag->child[3]);
+    add_queue(mydag->child[4]);
+    
+    printf("%d\n",get_num(mydag->type));
+    h = get_head();
+    print_dag(h);
+    
+}
 pTree find_node(Type type,int num,pTree child0,pTree child1,pTree child2,pTree child3,pTree child4,pTree parent)
 {
     int i,flag;
@@ -58,7 +116,7 @@ pTree find_node(Type type,int num,pTree child0,pTree child1,pTree child2,pTree c
                         break;
                     case tSTRING:
                     case tID:
-                        if(strcmp(p->node->data.stringVal,parent->data.stringVal)==1)
+                        if(strcmp(p->node->data.stringVal,parent->data.stringVal)==0)
                             flag =1;
                         break;
             
@@ -197,8 +255,8 @@ int get_num(Type type){
         case	tSIMPLE_ID: numl = 44;break;
         case	tSIMPLE_ENUM : numl = 45;break;
         case	tSIMPLE_SUBRANGE: numl = 46;break;
-        case	tSIMPLE_SUBRANGE_1: numl = 47;break;
-        case	tSIMPLE_SUBRANGE_2: numl = 48;break;
+        case	tSIMPLE_SUBRANGE_ID: numl = 47;break;
+       // case	tSIMPLE_SUBRANGE_2: numl = 48;break;
         case	tINTEGER: numl = 49;break;
         case	tREAL: numl = 50;break;
         case	tCHAR : numl = 51;break;
@@ -210,8 +268,46 @@ int get_num(Type type){
     return numl;
     
 }
-int main(int argc, const char * argv[]) {
+/*int main(int argc, const char * argv[]) {
     
-    printf("\n");
+    pTree test,test1,test2,test3,myout;
+    pTree test11,test21,test22,test31,test32;
+    pTree test4,test41,test42;
+    test = newTreeNode(tPROGRAM);
+    test1 = newTreeNode(tROUTINE);
+    test2 = newTreeNode(tSUB_ROUTINE);
+    test3 = newTreeNode(tROUTINE_HEAD);
+    test11 = newTreeNode(CONST_DECL);
+    test21 = newTreeNode(TYPE_DECL);
+    test22 = newTreeNode(ARRAY_DECL);
+    test31 = newTreeNode(FIELD_DECL);
+    test32 = newTreeNode(tREAL);
+    test32->data.realVal=1.1;
+    test4 = newTreeNode(tROUTINE_HEAD);
+    test41 = newTreeNode(FIELD_DECL);
+    test42 = newTreeNode(tREAL);
+    test42->data.realVal=1.12;
+    test->child[0] = test1;
+    test->child[1] = test2;
+    test->child[2] = test3;
+    test1->child[0] = test11;
+    test2->child[0] = test21;
+    test2->child[1] = test22;
+    test3->child[0] = test31;
+    test3->child[1] = test32;
+    
+    test->child[3] = test4;
+    test4->child[0]= test41;
+    test4->child[1] =test42;
+    
+    myout = traverse(test);
+    print_dag(myout);
+    //printf("\n");
     return 0;
-}
+}*/
+
+
+
+
+
+
