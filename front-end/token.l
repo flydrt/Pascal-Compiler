@@ -3,6 +3,7 @@
 %{
 #include "tree.h"
 #include "syntax.tab.h"
+int lineno = 1;
 %}
 
 digit [0-9]
@@ -22,14 +23,28 @@ sys_proc "write"|"writeln"
 
 %%
 
-{sys_funct} { return SYS_FUNCT; }
-{sys_con} { return SYS_CON; }
+{sys_funct} {
+    yylval = newTreeNode(tSYS_FUNCT);
+    (yylval->data).stringVal = copyString(yytext);
+    return SYS_FUNCT;
+}
+{sys_con} {
+    yylval = newTreeNode(tSYS_CON);
+    (yylval->data).stringVal = copyString(yytext);
+    return SYS_CON;
+}
 {sys_type} {
     yylval = newTreeNode(tSYS_TYPE);
 	(yylval->data).stringVal = copyString(yytext);
     return SYS_TYPE;
 }
-{sys_proc} { return SYS_PROC; }
+{sys_proc} {
+    yylval = newTreeNode(tSYS_PROC);
+    (yylval->data).stringVal = copyString(yytext);
+    return SYS_PROC;
+}
+
+
 
 "program"   {return PROGRAM;}
 "if"        {return IF;}
@@ -83,6 +98,8 @@ sys_proc "write"|"writeln"
 "function"  {return FUNCTION;}
 "procedure" {return PROCEDURE;}
 
+
+
 {number}    {
     yylval = newTreeNode(tINTEGER);
 	(yylval->data).intVal = atoi(yytext);
@@ -115,7 +132,7 @@ sys_proc "write"|"writeln"
 
 
 
-{newline}   {/*lineno++;*/}
+{newline}   { lineno++; }
 {whitespace}    {
 /*
 "write"     {return WRITE;}

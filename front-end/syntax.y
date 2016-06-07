@@ -358,11 +358,25 @@ assign_stmt : ID ASSIGN expression {
             }
 			;
 
-proc_stmt : ID
-          | ID LP args_list RP
-          | SYS_PROC
-          | SYS_PROC LP expression_list RP
-          | READ LP factor RP
+proc_stmt : ID {
+              $$ = $1;
+              $$->type = PROC_STMT_ID;
+          }
+          | ID LP args_list RP {
+              $$ = newTreeNode(PROC_STMT_ID_ARGS);
+              $$->child[1] = $1;
+              $$->child[2] = $3;
+          }
+          | SYS_PROC { $$ = $1; }
+          | SYS_PROC LP expression_list RP {
+              $$ = newTreeNode(PROC_STMT_SYS_EXPR);
+              $$->child[1] = $1;
+              $$->child[3] = $3;
+          }
+          | READ LP factor RP {
+              $$ = newTreeNode(PROC_STMT_READ);
+              $$->child[1] = $3;
+          }
 		  ;
 
 compound_stmt : PBEGIN stmt_list END { $$ = $2; }
@@ -535,20 +549,44 @@ term : term MUL factor {
      }
 	 ;
 
-factor : ID { $$ = $1; }
+factor : ID {
+           $$ = $1;
+           $$->type = FACTOR_ID;
+       }
 	   | ID LP args_list RP {
            $$ = newTreeNode(FACTOR_FUNC);
            $$->child[1] = $1;
            $$->child[2] = $3;
        }
-	   | SYS_FUNCT
-	   | SYS_FUNCT LP args_list RP
-	   | const_value
-	   | LP expression RP
-	   | NOT factor
-	   | MINUS factor
-	   | ID LB expression RB
-	   | ID DOT ID
+	   | SYS_FUNCT { $$ = $1; }
+	   | SYS_FUNCT LP args_list RP {
+           $$ = newTreeNode(FACTOR_SYS_FUNC_ARGS);
+           $$->child[1] = $1;
+           $$->child[2] = $3;
+       }
+	   | const_value {
+           $$ = newTreeNode(FACTOR_CONST);
+           $$->child[1] = $1;
+       }
+	   | LP expression RP { $$ = $2; }
+	   | NOT factor {
+           $$ = newTreeNode(FACTOR_NOT);
+           $$->child[1] = $2;
+       }
+	   | MINUS factor {
+           $$ = newTreeNode(FACTOR_MINUS);
+           $$->child[1] = $2;
+       }
+	   | ID LB expression RB {
+           $$ = newTreeNode(FACTOR_ARRAY);
+           $$->child[1] = $1;
+           $$->child[2] = $3;
+       }
+	   | ID DOT ID {
+           $$ = newTreeNode(FACTOR_RECORD);
+           $$->child[1] = $1;
+           $$->child[2] = $3;
+       }
 	   ;
 
 args_list : args_list COMMA expression {
@@ -573,8 +611,7 @@ int main() {
 }
 */
 
-pTree parse() {
-    FILE* file = fopen("txt", "r");
+pTree parse(FILE * file) {
     yyin = file;
     
     yyparse();

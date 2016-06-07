@@ -15,7 +15,9 @@ pTree newTreeNode(Type type) {
 	// 	case tPROGRAM_HEAD: p->num = 3; break;
 	// 	default : break;
 	// }
-	
+
+	p->lineno = lineno;
+
 	return p;
 }
 

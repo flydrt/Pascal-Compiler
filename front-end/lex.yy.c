@@ -712,7 +712,8 @@ char *yytext;
 #line 4 "token.l"
 #include "tree.h"
 #include "syntax.tab.h"
-#line 716 "lex.yy.c"
+int lineno = 1;
+#line 717 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -894,10 +895,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 23 "token.l"
+#line 24 "token.l"
 
 
-#line 901 "lex.yy.c"
+#line 902 "lex.yy.c"
 
 	if ( !(yy_init) )
 		{
@@ -982,17 +983,25 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 25 "token.l"
-{ return SYS_FUNCT; }
+#line 26 "token.l"
+{
+    yylval = newTreeNode(tSYS_FUNCT);
+    (yylval->data).stringVal = copyString(yytext);
+    return SYS_FUNCT;
+}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 26 "token.l"
-{ return SYS_CON; }
+#line 31 "token.l"
+{
+    yylval = newTreeNode(tSYS_CON);
+    (yylval->data).stringVal = copyString(yytext);
+    return SYS_CON;
+}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 27 "token.l"
+#line 36 "token.l"
 {
     yylval = newTreeNode(tSYS_TYPE);
 	(yylval->data).stringVal = copyString(yytext);
@@ -1001,252 +1010,256 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 32 "token.l"
-{ return SYS_PROC; }
+#line 41 "token.l"
+{
+    yylval = newTreeNode(tSYS_PROC);
+    (yylval->data).stringVal = copyString(yytext);
+    return SYS_PROC;
+}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 34 "token.l"
+#line 49 "token.l"
 {return PROGRAM;}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 35 "token.l"
+#line 50 "token.l"
 {return IF;}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 36 "token.l"
+#line 51 "token.l"
 {return THEN;}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 37 "token.l"
+#line 52 "token.l"
 {return ELSE;}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 38 "token.l"
+#line 53 "token.l"
 {return REPEAT;}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 39 "token.l"
+#line 54 "token.l"
 {return UNTIL;}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 40 "token.l"
+#line 55 "token.l"
 {return WHILE;}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 41 "token.l"
+#line 56 "token.l"
 {return DO;}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 42 "token.l"
+#line 57 "token.l"
 {return CASE;}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 43 "token.l"
+#line 58 "token.l"
 {return TO;}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 44 "token.l"
+#line 59 "token.l"
 {return DOWNTO;}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 45 "token.l"
+#line 60 "token.l"
 {return FOR;}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 46 "token.l"
+#line 61 "token.l"
 {return READ;}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 48 "token.l"
+#line 63 "token.l"
 {return LB;}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 49 "token.l"
+#line 64 "token.l"
 {return RB;}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 50 "token.l"
+#line 65 "token.l"
 {return SEMI;}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 51 "token.l"
+#line 66 "token.l"
 {return DOTDOT;}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 52 "token.l"
+#line 67 "token.l"
 {return DOT;}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 53 "token.l"
+#line 68 "token.l"
 {return LP;}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 54 "token.l"
+#line 69 "token.l"
 {return RP;}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 55 "token.l"
+#line 70 "token.l"
 {return COMMA;}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 56 "token.l"
+#line 71 "token.l"
 {return COLON;}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 58 "token.l"
+#line 73 "token.l"
 {return ASSIGN;}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 59 "token.l"
+#line 74 "token.l"
 {return EQUAL;}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 60 "token.l"
+#line 75 "token.l"
 {return PLUS;}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 61 "token.l"
+#line 76 "token.l"
 {return MINUS;}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 62 "token.l"
+#line 77 "token.l"
 {return OR;}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 63 "token.l"
+#line 78 "token.l"
 {return UNEQUAL;}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 64 "token.l"
+#line 79 "token.l"
 {return GE;}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 65 "token.l"
+#line 80 "token.l"
 {return GT;}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 66 "token.l"
+#line 81 "token.l"
 {return LE;}
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 67 "token.l"
+#line 82 "token.l"
 {return LT;}
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 68 "token.l"
+#line 83 "token.l"
 {return MUL;}
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 69 "token.l"
+#line 84 "token.l"
 {return DIV;}
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 70 "token.l"
+#line 85 "token.l"
 {return MOD;}
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 71 "token.l"
+#line 86 "token.l"
 {return AND;}
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 72 "token.l"
+#line 87 "token.l"
 {return NOT;}
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 74 "token.l"
+#line 89 "token.l"
 {return GOTO;}
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 75 "token.l"
+#line 90 "token.l"
 {return ARRAY;}
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 76 "token.l"
+#line 91 "token.l"
 {return OF;}
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 77 "token.l"
+#line 92 "token.l"
 {return RECORD;}
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 78 "token.l"
+#line 93 "token.l"
 {return PBEGIN;}
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 79 "token.l"
+#line 94 "token.l"
 {return END;}
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 80 "token.l"
+#line 95 "token.l"
 {return CONST;}
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 81 "token.l"
+#line 96 "token.l"
 {return TYPE;}
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 82 "token.l"
+#line 97 "token.l"
 {return VAR;}
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 83 "token.l"
+#line 98 "token.l"
 {return FUNCTION;}
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 84 "token.l"
+#line 99 "token.l"
 {return PROCEDURE;}
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 86 "token.l"
+#line 103 "token.l"
 {
     yylval = newTreeNode(tINTEGER);
 	(yylval->data).intVal = atoi(yytext);
@@ -1255,7 +1268,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 91 "token.l"
+#line 108 "token.l"
 {
     yylval = newTreeNode(tREAL);
 	(yylval->data).realVal = atof(yytext);
@@ -1264,7 +1277,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 96 "token.l"
+#line 113 "token.l"
 {
     yylval = newTreeNode(tCHAR);
 	(yylval->data).charVal = yytext[1];
@@ -1273,7 +1286,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 101 "token.l"
+#line 118 "token.l"
 {
     yylval = newTreeNode(tSTRING);
     char temp[255];
@@ -1285,7 +1298,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 110 "token.l"
+#line 127 "token.l"
 {
 	yylval = newTreeNode(tID);
 	(yylval->data).stringVal = copyString(yytext);
@@ -1295,12 +1308,12 @@ YY_RULE_SETUP
 case 58:
 /* rule 58 can match eol */
 YY_RULE_SETUP
-#line 118 "token.l"
-{/*lineno++;*/}
+#line 135 "token.l"
+{ lineno++; }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 119 "token.l"
+#line 136 "token.l"
 {
 /*
 "write"     {return WRITE;}
@@ -1323,10 +1336,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 138 "token.l"
+#line 155 "token.l"
 ECHO;
 	YY_BREAK
-#line 1330 "lex.yy.c"
+#line 1343 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2323,7 +2336,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 138 "token.l"
+#line 155 "token.l"
 
 
 

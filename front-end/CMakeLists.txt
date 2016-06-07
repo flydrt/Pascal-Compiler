@@ -11,6 +11,6 @@ set(SOURCE_FILES
     syntax.tab.c
     syntax.tab.h
     tree.c
-    tree.h util.c util.h)
+    tree.h util.c util.h error.c error.h symNodeType.h)
 
 add_executable(main ${SOURCE_FILES})

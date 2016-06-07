@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include "symtab.h"
+#include "error.h"
+#include "tree.h"
 
 pSymNode traverseSyntaxTree(pTree root) {
 	if (root == NULL)
@@ -23,6 +25,11 @@ pSymNode traverseSyntaxTree(pTree root) {
 			break;
 		}
 		case tROUTINE: {
+			traverseSyntaxTree(root->child[1]);
+			traverseSyntaxTree(root->child[2]);
+			break;
+		}
+		case tSUB_ROUTINE: {
 			traverseSyntaxTree(root->child[1]);
 			traverseSyntaxTree(root->child[2]);
 			break;
@@ -86,9 +93,46 @@ pSymNode traverseSyntaxTree(pTree root) {
 			}
 			if (insertSymNode2PreviousTab(p)) {
 				//To do
+				parseError(DUPLICATE, root->child[1]->lineno, p->name);
 			}
 			break;
 		}
+		case PROCEDURE_HEAD: {
+			pSymNode p = newEmptySymbol();
+			p->type = TYPE_PROC;
+			strcpy(p->name, root->child[1]->data.stringVal);
+
+			pTree temp = root->child[2];
+			pSymNode last = NULL;
+			while (temp) {
+				pSymNode t = traverseSyntaxTree(temp);
+
+				if (p->argc == 0) {
+					p->next_link = t;
+				}
+				else {
+					last->next_link = t;
+				}
+
+				p->argc += t->argc;
+
+				while (t->next_link) {
+					t = t->next_link;
+				}
+				last = t;
+
+				temp = temp->child[0];
+			}
+			if (insertSymNode(p)) {
+				//To do
+			}
+			if (insertSymNode2PreviousTab(p)) {
+				//To do
+				parseError(DUPLICATE, root->child[1]->lineno, p->name);
+			}
+			break;
+		}
+
 		case VAR_PARA:
 		case VAL_PARA: {
 			pSymNode varParaType = traverseSyntaxTree(root->child[2]);
@@ -112,12 +156,81 @@ pSymNode traverseSyntaxTree(pTree root) {
 
 				if (insertSymNode(p)) {
 					//To do
+					parseError(DUPLICATE, temp->lineno, p->name);
 				}
 
 				last = p;
 				temp = temp->child[0];
 			}
 			return first;
+		}
+
+		//stmt
+		case LABEL_STMT: {
+			//lineno
+			//To do
+			break;
+		}
+		case ASSIGN_STMT_1: {
+			pSymNode p = searchID(root->child[1]->data.stringVal);
+			p->attr;
+			break;
+		}
+
+		//expression
+		case eGE: {
+			pSymNode p1 = traverseSyntaxTree(root->child[1]);
+			pSymNode p2 = traverseSyntaxTree(root->child[2]);
+			break;
+		}
+
+		//factor
+		case FACTOR_ID: {
+			pSymNode p = searchID(root->data.stringVal);
+			if (p) {
+				root->attr = p->attr;
+				return p;
+			}
+			else {
+				//can't find id
+				parseError(UNDECL_ID, root->lineno, root->data.stringVal);
+			}
+			break;
+		}
+		case FACTOR_FUNC: {
+			pSymNode p = searchID(root->child[1]->data.stringVal);
+			if (p) {
+				if (p->type != TYPE_FUNC) {
+					parseError(NOT_FUNC, root->child[1]->lineno, root->child[1]->data.stringVal);
+				}
+				root->attr = p->attr;
+
+				// To do with child[2]
+				pTree temp = root->child[2];
+				pSymNode tempSym = p->next_link;
+				while (temp && tempSym) {
+					traverseSyntaxTree(temp);
+					if (temp->attr != tempSym->attr) {
+						//args not match
+						//To do
+						parseError(FUNC_ARGS_NOT_MATCH, temp->lineno, tempSym->name);
+					}
+
+					tempSym = tempSym->next_link;
+					temp = temp->child[0];
+				}
+				if (temp || tempSym) {
+					//num not match
+					parseError(FUNC_ARGS_NUM_NOT_MATCH, root->child[2]->lineno, NULL);
+				}
+
+				return p;
+			}
+			else {
+				//can't find id
+				parseError(UNDECL_ID, root->child[1]->lineno, root->child[1]->data.stringVal);
+			}
+			break;
 		}
 
 		//decl
@@ -146,11 +259,20 @@ pSymNode traverseSyntaxTree(pTree root) {
 					(p->v).s = (root->child[2]->data).stringVal;
 					break;
 				}
+				case tSYS_CON: {
+					char * temp = root->child[2]->data.stringVal;
+					if (!strcmp(temp, "true") || !strcmp(temp, "false")) {
+						p->attr = ATTR_BOOL;
+						(p->v).b = !strcmp(temp, "true") ? true : false;
+					}
+					break;
+				}
 				default: break;
 			}
 			if(insertSymNode(p)) {
 				//double define error
 				//To do
+				parseError(DUPLICATE, root->child[1]->lineno, p->name);
 			}
 			traverseSyntaxTree(root->child[0]);
 			break;
@@ -161,6 +283,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 			strcpy(p->name, root->child[1]->data.stringVal);
 			if (insertSymNode(p)) {
 				//To do
+				parseError(DUPLICATE, root->child[1]->lineno, p->name);
 			}
 		 	traverseSyntaxTree(root->child[0]);
 		 	break;
@@ -176,15 +299,11 @@ pSymNode traverseSyntaxTree(pTree root) {
 				strcpy(p->name, temp->data.stringVal);
 				if (insertSymNode(p)) {
 					//To do
+					parseError(DUPLICATE, temp->lineno, p->name);
 				}
 				temp = temp->child[0];
 			}
 		 	traverseSyntaxTree(root->child[0]);
-		 	break;
-		}
-		case tSUB_ROUTINE: {
-		 	traverseSyntaxTree(root->child[1]);
-			traverseSyntaxTree(root->child[2]);
 		 	break;
 		}
 
@@ -200,6 +319,8 @@ pSymNode traverseSyntaxTree(pTree root) {
 				p->attr = ATTR_CHAR;
 			else if(!strcmp(s, "string"))
 				p->attr = ATTR_STRING;
+			else if(!strcmp(s, "boolean"))
+				p->attr = ATTR_BOOL;
 			return p;
 		}
 		case tSIMPLE_ID: {
@@ -212,6 +333,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 			}
 			else {
 				//can't find type identifier
+				parseError(UNDECL_TYPE, root->lineno, root->data.stringVal);
 			}
 		}
 		case tSIMPLE_ENUM: {
@@ -227,6 +349,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 				// can assign p->v
 				if (insertSymNode(p)) {
 					//To do
+					parseError(DUPLICATE, root->lineno, root->data.stringVal);
 				}
 
 				symbol->link->num++;
@@ -309,11 +432,25 @@ pSymNode traverseSyntaxTree(pTree root) {
 				else {
 					//ID is not const
 					//To do
+					if (p1->type != TYPE_CONST) {
+						fprintf(stderr, "Error at line %d:\n", root->child[1]->lineno);
+						fprintf(stderr, "\t\"%s\" should be const type\n\n", root->child[1]->data.stringVal);
+					}
+					if (p2->type != TYPE_CONST) {
+						fprintf(stderr, "Error at line %d:\n", root->child[2]->lineno);
+						fprintf(stderr, "\t\"%s\" should be const type\n\n", root->child[2]->data.stringVal);
+					}
 				}
 			}
 			else {
 				//can't find ID
 				//To do
+				if (!p1) {
+					parseError(UNDECL_ID, root->child[1]->lineno, root->child[1]->data.stringVal);
+				}
+				if (!p2) {
+					parseError(UNDECL_ID, root->child[2]->lineno, root->child[2]->data.stringVal);
+				}
 			}
 
 			return symbol;

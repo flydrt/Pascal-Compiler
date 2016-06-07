@@ -5,11 +5,13 @@
 extern struct stack symTabStack;
 
 int main() {
+	FILE * file = fopen("wrong.pas", "r");
+
 	initSymTabStack();
-	pTree p = parse();
+	pTree p = parse(file);
 	traverseSyntaxTree(p);
 
-	printSymTab();
+//	printSymTab();
 
 	return 0;
 }

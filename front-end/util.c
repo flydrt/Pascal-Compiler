@@ -41,6 +41,12 @@ void printSymNode(pSymNode temp, int indent) {
                 case ATTR_STRING:
                     printf(" %s", temp->v.s);
                     break;
+                case ATTR_BOOL:
+                    if (temp->v.b == true)
+                        printf(" true");
+                    else
+                        printf(" false");
+                    break;
                 default:
                     break;
             }
@@ -126,6 +132,7 @@ void printAttr(IDAttr attr) {
         case ATTR_REAL: printf("real"); break;
         case ATTR_CHAR: printf("char"); break;
         case ATTR_STRING: printf("string"); break;
+        case ATTR_BOOL: printf("boolean"); break;
         case ATTR_ENUM: printf("enum"); break;
         case ATTR_SUBR: printf("subr"); break;
         case ATTR_ARRAY: printf("array"); break;
@@ -134,7 +141,7 @@ void printAttr(IDAttr attr) {
 }
 
 int isSimpleType(IDAttr attr) {
-    if (attr == ATTR_INTEGER || attr == ATTR_REAL || attr == ATTR_CHAR || attr == ATTR_STRING)
+    if (attr == ATTR_INTEGER || attr == ATTR_REAL || attr == ATTR_CHAR || attr == ATTR_STRING || attr == ATTR_BOOL)
         return 1;
     else
         return 0;
