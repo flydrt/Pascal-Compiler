@@ -18,7 +18,7 @@ static pTree root;
 %token SYS_PROC READ PBEGIN IF THEN ELSE
 %token REPEAT UNTIL WHILE DO FOR TO DOWNTO
 %token CASE GOTO GE GT LE LT UNEQUAL PLUS
-%token OR MUL DIV MOD AND SYS_FUNCT NOT
+%token OR MUL DIV RDIV MOD AND SYS_FUNCT NOT
 
 %%
 program : program_head routine DOT {
@@ -526,6 +526,11 @@ expr : expr PLUS term {
 
 term : term MUL factor {
         $$ = newTreeNode(eMUL);
+        $$->child[1] = $1;
+        $$->child[2] = $3;
+     }
+     | term RDIV factor {
+        $$ = newTreeNode(eRDIV);
         $$->child[1] = $1;
         $$->child[2] = $3;
      }

@@ -14,6 +14,9 @@ void parseError(ErrorType et, int no, char *name) {
         case UNDECL_ID:
             fprintf(stderr, "\tUndeclared identifier \"%s\"\n\n", name);
             break;
+        case UNDECL_RECORD_ID:
+            fprintf(stderr, "\tUndeclared record identifier \"%s\"\n\n", name);
+            break;
         case DUPLICATE:
             fprintf(stderr, "\tDuplicate identifier \"%s\"\n\n", name);
             break;

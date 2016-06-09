@@ -105,10 +105,11 @@ extern int yydebug;
     OR = 308,
     MUL = 309,
     DIV = 310,
-    MOD = 311,
-    AND = 312,
-    SYS_FUNCT = 313,
-    NOT = 314
+    RDIV = 311,
+    MOD = 312,
+    AND = 313,
+    SYS_FUNCT = 314,
+    NOT = 315
   };
 #endif
 

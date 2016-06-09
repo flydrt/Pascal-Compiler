@@ -12,7 +12,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 	switch(root->type) {
 		case tPROGRAM: {
 			pSymNode *hashtab = newHashTab();
-			pushSymTab(hashtab);
+			root->symtab = pushSymTab(hashtab);
 
 			pSymNode p = newEmptySymbol();
 			p->type = TYPE_PROG;
@@ -45,7 +45,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 
 		case FUNCTION_DECL: {
 			pSymNode *hashtab = newHashTab();
-			pushSymTab(hashtab);
+			root->symtab = pushSymTab(hashtab);
 			traverseSyntaxTree(root->child[1]);
 			traverseSyntaxTree(root->child[2]);
 			popSymTab();
@@ -54,7 +54,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 		}
 		case PROCEDURE_DECL: {
 			pSymNode *hashtab = newHashTab();
-			pushSymTab(hashtab);
+			root->symtab = pushSymTab(hashtab);
 			traverseSyntaxTree(root->child[1]);
 			traverseSyntaxTree(root->child[2]);
 			popSymTab();
@@ -167,20 +167,262 @@ pSymNode traverseSyntaxTree(pTree root) {
 
 		//stmt
 		case LABEL_STMT: {
-			//lineno
-			//To do
+			traverseSyntaxTree(root->child[2]);
+			traverseSyntaxTree(root->child[0]);
 			break;
 		}
 		case ASSIGN_STMT_1: {
 			pSymNode p = searchID(root->child[1]->data.stringVal);
-			p->attr;
+			//To do p is NULL
+			IDAttr attr = getAttr(p);
+			if (attr == ATTR_NONE) {
+				//To do
+			}
+			traverseSyntaxTree(root->child[2]);
+			if (root->child[2]->attr == attr) {
+				//nothing
+			}
+			else if (attr == ATTR_INTEGER && root->child[2]->attr == ATTR_REAL) {
+				//nothing
+			}
+			else {
+				//To do
+			}
+			traverseSyntaxTree(root->child[0]);
+			break;
+		}
+		case IF_STMT: {
+			traverseSyntaxTree(root->child[1]);
+			if (root->child[1]->attr != ATTR_BOOL) {
+				//To do
+			}
+			traverseSyntaxTree(root->child[2]);
+			traverseSyntaxTree(root->child[3]);
+			traverseSyntaxTree(root->child[0]);
+			break;
+		}
+		case REPEAT_STMT: {
+			traverseSyntaxTree(root->child[1]);
+			traverseSyntaxTree(root->child[2]);
+			if (root->child[2]->attr != ATTR_BOOL) {
+				//To do
+			}
+			traverseSyntaxTree(root->child[0]);
+			break;
+		}
+		case WHILE_STMT: {
+			traverseSyntaxTree(root->child[1]);
+			if (root->child[1]->attr != ATTR_BOOL) {
+				//To do
+			}
+			traverseSyntaxTree(root->child[2]);
+			traverseSyntaxTree(root->child[0]);
+			break;
+		}
+		case FOR_STMT_DOWNTO:
+		case FOR_STMT_TO: {
+			pSymNode p = searchID(root->child[1]->data.stringVal);
+			//To do p is NULL
+			IDAttr attr = getAttr(p);
+			if (attr != ATTR_INTEGER) {
+				//To do
+			}
+
+			traverseSyntaxTree(root->child[2]);
+			if (root->child[2]->attr != ATTR_INTEGER) {
+				//To do
+			}
+
+			traverseSyntaxTree(root->child[3]);
+			if (root->child[3]->attr != ATTR_INTEGER) {
+				//To do
+			}
+
+			traverseSyntaxTree(root->child[4]);
+			traverseSyntaxTree(root->child[0]);
+			break;
+		}
+		case CASE_STMT: {
+			traverseSyntaxTree(root->child[1]);
+			if (root->child[1]->attr != ATTR_INTEGER && root->child[1]->attr != ATTR_CHAR) {
+				//To do
+				break;
+			}
+			IDAttr attr = root->child[1]->attr;
+
+			pTree temp = root->child[2];
+			while (temp) {
+				traverseSyntaxTree(temp);
+
+				if (attr != temp->attr) {
+					//To do
+					break;
+				}
+				temp = temp->child[0];
+			}
+			traverseSyntaxTree(root->child[0]);
+			break;
+		}
+		case CASE_EXPR_CONST: {
+			switch (root->child[1]->type) {
+				case tINTEGER: {
+					root->attr = ATTR_INTEGER;
+					break;
+				}
+				case tCHAR: {
+					root->attr = ATTR_CHAR;
+					break;
+				}
+				default: {
+					//To do
+					break;
+				}
+			}
+			traverseSyntaxTree(root->child[2]);
+			break;
+		}
+		case CASE_EXPR_ID: {
+			pSymNode p = searchID(root->child[1]->data.stringVal);
+			if (p) {
+				if (p->type != TYPE_CONST) {
+					//To do
+				}
+				else {
+					if (p->attr == ATTR_INTEGER || p->attr == ATTR_CHAR) {
+						root->attr = p->attr;
+					}
+					else {
+						//To do
+					}
+				}
+			}
+			else {
+				parseError(UNDECL_ID, root->child[1]->lineno, root->child[1]->data.stringVal);
+			}
+			traverseSyntaxTree(root->child[2]);
 			break;
 		}
 
 		//expression
-		case eGE: {
-			pSymNode p1 = traverseSyntaxTree(root->child[1]);
-			pSymNode p2 = traverseSyntaxTree(root->child[2]);
+		case eGE:
+		case eGT:
+		case eLE:
+		case eLT:
+		case eEQUAL:
+		case eUNEQUAL: {
+			traverseSyntaxTree(root->child[1]);
+			traverseSyntaxTree(root->child[2]);
+			if (root->child[1]->attr == root->child[2]->attr) {
+				root->attr = ATTR_BOOL;
+			}
+			else if ((root->child[1]->attr == ATTR_INTEGER && root->child[2]->attr == ATTR_REAL) ||
+					(root->child[2]->attr == ATTR_INTEGER && root->child[1]->attr == ATTR_REAL)) {
+				root->attr = ATTR_BOOL;
+			}
+			else if ((root->child[1]->attr == ATTR_CHAR && root->child[2]->attr == ATTR_STRING) ||
+					 (root->child[2]->attr == ATTR_CHAR && root->child[1]->attr == ATTR_STRING)) {
+				root->attr = ATTR_BOOL;
+			}
+			else {
+				//To do
+			}
+			traverseSyntaxTree(root->child[0]);
+			break;
+		}
+		case ePLUS: {
+			traverseSyntaxTree(root->child[1]);
+			traverseSyntaxTree(root->child[2]);
+			if (root->child[1]->attr == root->child[2]->attr) {
+				root->attr = root->child[1]->attr;
+			}
+			else if ((root->child[1]->attr == ATTR_INTEGER && root->child[2]->attr == ATTR_REAL) ||
+					 (root->child[2]->attr == ATTR_INTEGER && root->child[1]->attr == ATTR_REAL)) {
+				root->attr = ATTR_REAL;
+			}
+			else if ((root->child[1]->attr == ATTR_CHAR && root->child[2]->attr == ATTR_STRING) ||
+					 (root->child[2]->attr == ATTR_CHAR && root->child[1]->attr == ATTR_STRING)) {
+				root->attr = ATTR_STRING;
+			}
+			else {
+				//To do
+			}
+			break;
+		}
+		case eMINUS: {
+			traverseSyntaxTree(root->child[1]);
+			traverseSyntaxTree(root->child[2]);
+			if ((root->child[1]->attr == root->child[2]->attr) &&
+					(root->child[1]->attr == ATTR_REAL || root->child[1]->attr == ATTR_INTEGER)) {
+				root->attr = root->child[1]->attr;
+			}
+			else if ((root->child[1]->attr == ATTR_INTEGER && root->child[2]->attr == ATTR_REAL) ||
+					 (root->child[2]->attr == ATTR_INTEGER && root->child[1]->attr == ATTR_REAL)) {
+				root->attr = ATTR_REAL;
+			}
+			else {
+				//To do
+			}
+			break;
+		}
+		case eOR:
+		case eAND: {
+			traverseSyntaxTree(root->child[1]);
+			traverseSyntaxTree(root->child[2]);
+			if (root->child[1]->attr == root->child[2]->attr) {
+				if (root->child[1]->attr == ATTR_INTEGER) {
+					root->attr = ATTR_INTEGER;
+				}
+				else if (root->child[1]->attr == ATTR_BOOL) {
+					root->attr = ATTR_BOOL;
+				}
+				else {
+					//string-string, char-char, real-real
+					//To do
+				}
+			}
+			else {
+				//To do
+			}
+			break;
+		}
+		case eMUL: {
+			traverseSyntaxTree(root->child[1]);
+			traverseSyntaxTree(root->child[2]);
+			if ((root->child[1]->attr == root->child[2]->attr) &&
+				(root->child[1]->attr == ATTR_REAL || root->child[1]->attr == ATTR_INTEGER)) {
+				root->attr = root->child[1]->attr;
+			}
+			else if ((root->child[1]->attr == ATTR_INTEGER && root->child[2]->attr == ATTR_REAL) ||
+					 (root->child[2]->attr == ATTR_INTEGER && root->child[1]->attr == ATTR_REAL)) {
+				root->attr = ATTR_REAL;
+			}
+			else {
+				//To do
+			}
+			break;
+		}
+		case eRDIV: {
+			traverseSyntaxTree(root->child[1]);
+			traverseSyntaxTree(root->child[2]);
+			if ((root->child[1]->attr == ATTR_REAL || root->child[1]->attr == ATTR_INTEGER) &&
+				(root->child[2]->attr == ATTR_REAL || root->child[2]->attr == ATTR_INTEGER)) {
+				root->attr = ATTR_REAL;
+			}
+			else {
+				//To do
+			}
+			break;
+		}
+		case eDIV:
+		case eMOD: {
+			traverseSyntaxTree(root->child[1]);
+			traverseSyntaxTree(root->child[2]);
+			if (root->child[1]->attr == root->child[2]->attr && root->child[1]->attr == ATTR_INTEGER) {
+				root->attr = ATTR_INTEGER;
+			}
+			else {
+				//To do
+			}
 			break;
 		}
 
@@ -228,6 +470,73 @@ pSymNode traverseSyntaxTree(pTree root) {
 			}
 			else {
 				//can't find id
+				parseError(UNDECL_ID, root->child[1]->lineno, root->child[1]->data.stringVal);
+			}
+			break;
+		}
+		case FACTOR_CONST: {
+			switch (root->child[1]->type) {
+				case tINTEGER: root->attr = root->child[1]->attr = ATTR_INTEGER; break;
+				case tREAL: root->attr = root->child[1]->attr = ATTR_REAL; break;
+				case tCHAR: root->attr = root->child[1]->attr = ATTR_CHAR; break;
+				case tSTRING: root->attr = root->child[1]->attr = ATTR_STRING; break;
+				case tSYS_CON: {
+					char *temp = root->child[1]->data.stringVal;
+					if (!strcmp(temp, "true") || !strcmp(temp, "false")) {
+						root->attr = root->child[1]->attr = ATTR_BOOL;
+					}
+					break;
+				}
+			}
+			break;
+		}
+		case FACTOR_NOT: {
+			traverseSyntaxTree(root->child[1]);
+			if (root->child[1]->attr == ATTR_BOOL || root->child[1]->attr == ATTR_INTEGER) {
+				root->attr = root->child[1]->attr;
+			}
+			else if (root->child[1]->attr == ATTR_CHAR) {
+				root->attr = ATTR_INTEGER;
+			}
+			else {
+				//To do
+			}
+			break;
+		}
+		case FACTOR_MINUS: {
+			traverseSyntaxTree(root->child[1]);
+			if (root->child[1]->attr == ATTR_INTEGER || root->child[1]->attr == ATTR_REAL) {
+				root->attr = root->child[1]->attr;
+			}
+			else {
+				//To do
+			}
+			break;
+		}
+		case FACTOR_ARRAY: {
+			//To do
+			break;
+		}
+		case FACTOR_RECORD: {
+			pSymNode p = searchID(root->child[1]->data.stringVal);
+			char * name = root->child[2]->data.stringVal;
+			if (p) {
+				if (p->attr != ATTR_RECORD) {
+					//To do
+				}
+				pSymNode temp = p->link->first;
+				while (temp) {
+					if (!strcmp(temp->name, name)) {
+						root->attr = getAttr(temp);
+						return NULL;
+					}
+					temp = temp->next_link;
+				}
+				//To do
+				//can't find record
+				parseError(UNDECL_RECORD_ID, root->child[2]->lineno, name);
+			}
+			else {
 				parseError(UNDECL_ID, root->child[1]->lineno, root->child[1]->data.stringVal);
 			}
 			break;
@@ -370,49 +679,47 @@ pSymNode traverseSyntaxTree(pTree root) {
 			symbol->attr = ATTR_SUBR;
 			symbol->link->num = 2;
 
-			pSymNode p = newEmptySymbol();
+			pSymNode p1 = newEmptySymbol();
 			switch(root->child[1]->type) {
 				case tINTEGER: {
-					(p->v).i = (root->child[1]->data).intVal;
-					break;
-				}
-				case tREAL: {
-					(p->v).d = (root->child[1]->data).realVal;
+					p1->attr = ATTR_INTEGER;
+					(p1->v).i = (root->child[1]->data).intVal;
 					break;
 				}
 				case tCHAR: {
-					(p->v).c = (root->child[1]->data).charVal;
+					p1->attr = ATTR_CHAR;
+					(p1->v).c = (root->child[1]->data).charVal;
 					break;
 				}
-				case tSTRING: {
-					(p->v).s = (root->child[1]->data).stringVal;
+				default: {
+					//To do
 					break;
 				}
-				default: break;
 			}
-			symbol->link->first = p;
+			symbol->link->first = p1;
 
-			p = newEmptySymbol();
+			pSymNode p2 = newEmptySymbol();
 			switch(root->child[2]->type) {
 				case tINTEGER: {
-					(p->v).i = (root->child[2]->data).intVal;
-					break;
-				}
-				case tREAL: {
-					(p->v).d = (root->child[2]->data).realVal;
+					p2->attr = ATTR_INTEGER;
+					(p2->v).i = (root->child[2]->data).intVal;
 					break;
 				}
 				case tCHAR: {
-					(p->v).c = (root->child[2]->data).charVal;
+					p2->attr = ATTR_CHAR;
+					(p2->v).c = (root->child[2]->data).charVal;
 					break;
 				}
-				case tSTRING: {
-					(p->v).s = (root->child[2]->data).stringVal;
+				default: {
+					//To do
 					break;
 				}
-				default: break;
 			}
-			symbol->link->last = p;
+			symbol->link->last = p2;
+
+			if (p1->attr != p2->attr) {
+				//To do
+			}
 
 			return symbol;
 		}
@@ -536,6 +843,26 @@ pSymNode searchID(char * name) {
 	return NULL;
 }
 
+pSymNode searchIDWithinScope(char * name, pTabNode symtab, int * ip) {
+	pTabNode tempTab = symtab;
+	*ip = 0;
+
+	while (tempTab) {
+		pSymNode temp = tempTab->node[hash(name)];
+
+		while (temp) {
+			if (!strcmp(temp->name, name))
+				return temp;
+			temp = temp->next;
+		}
+
+		(*ip)++;
+		tempTab = tempTab->next;
+	}
+
+	return NULL;
+}
+
 pSymNode newEmptySymbol() {
 	pSymNode result = (pSymNode) malloc(sizeof(SymNode));
 	result->next = NULL;
@@ -554,11 +881,12 @@ void initSymTabStack() {
 	symTabStack.top = NULL;
 }
 
-void pushSymTab(pSymNode * p) {
+pTabNode pushSymTab(pSymNode * p) {
 	pTabNode temp = (pTabNode)malloc(sizeof(TabNode));
 	temp->node = p;
 	temp->next = symTabStack.top;
 	symTabStack.top = temp;
+	return temp;
 }
 void popSymTab() {
 	pTabNode temp = symTabStack.top;
@@ -639,3 +967,45 @@ int insertSymNode2PreviousTab(pSymNode p) {
 
 	return 0;
 }
+
+IDAttr getAttr(pSymNode p) {
+	switch (p->attr) {
+		case ATTR_INTEGER:
+		case ATTR_REAL:
+		case ATTR_CHAR:
+		case ATTR_STRING:
+		case ATTR_BOOL:
+			return p->attr;
+		case ATTR_ENUM:
+			return p->attr;
+		case ATTR_SUBR:
+			return p->link->first->attr;
+		case ATTR_ARRAY: {
+			pTypeAttr temp = p->link;
+			while (temp) {
+				if (temp->attr == ATTR_INTEGER || temp->attr == ATTR_REAL || temp->attr == ATTR_CHAR ||
+					temp->attr == ATTR_STRING || temp->attr == ATTR_BOOL)
+					return temp->attr;
+				else
+					temp = temp->attrLink;
+			}
+		}
+		case ATTR_RECORD:
+			return p->attr;
+		default: break;
+	}
+
+	return ATTR_NONE;
+}
+
+//IDAttr findAttrbyName(char *name) {
+//	pSymNode p = searchID(name);
+//	if (p) {
+//		if (p->type != TYPE_VAR)
+//			return ATTR_NONE;
+//		else
+//			return p->attr;
+//	}
+//	else
+//		return ATTR_NONE;
+//}

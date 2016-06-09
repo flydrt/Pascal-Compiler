@@ -22,19 +22,6 @@ var
     t, u : (a, BB, CC, DD, EE);
     v : i;
 
-function www(var x, y: g; z: string; zz, ww: real) : g;
-const a = 'c';
-type
-    b = record
-        a : array [0..9] of real;
-    end;
-var
-    c : b;
-
 begin
-
-end;
-
-begin
-
+    f := 1 + 2;
 end.

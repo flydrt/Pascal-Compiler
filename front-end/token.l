@@ -81,7 +81,8 @@ sys_proc "write"|"writeln"
 "<="        {return LE;}
 "<"         {return LT;}
 "*"         {return MUL;}
-"/"         {return DIV;}
+"/"         {return RDIV;}
+"div"       {return DIV;}
 "mod"       {return MOD;}
 "and"       {return AND;}
 "not"       {return NOT;}
