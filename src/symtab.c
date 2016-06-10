@@ -308,6 +308,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 		}
 		case PROC_STMT_ID_ARGS: {
 			//To do
+			traverseSyntaxTree(root->child[2]);
 			break;
 		}
 		case tSYS_PROC: {
@@ -316,10 +317,12 @@ pSymNode traverseSyntaxTree(pTree root) {
 		}
 		case PROC_STMT_SYS_EXPR: {
 			//To do
+			traverseSyntaxTree(root->child[3]);
 			break;
 		}
 		case PROC_STMT_READ: {
 			//To do
+			traverseSyntaxTree(root->child[1]);
 			break;
 		}
 		case IF_STMT: {
