@@ -1,0 +1,3 @@
+sys_call_id = 0x80
+exit_syscall = 0x1
+
