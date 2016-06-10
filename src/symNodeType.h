@@ -39,6 +39,7 @@ typedef struct typeAttr {
 
 typedef struct symNode {
     char name[NAME_LEN];
+    char rname[NAME_LEN];
     IDType type;
     IDAttr attr;
     Value v;

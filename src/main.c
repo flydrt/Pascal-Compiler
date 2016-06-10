@@ -11,7 +11,7 @@ int main() {
 	pTree p = parse(file);
 	traverseSyntaxTree(p);
 
-//	printSymTab();
+//	printSymTab(symTabStack.top);
 
 	return 0;
 }

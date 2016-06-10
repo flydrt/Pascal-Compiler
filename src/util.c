@@ -1,8 +1,8 @@
 #include "util.h"
 
-void printSymTab() {
+void printSymTab(pTabNode p) {
     int i;
-    pTabNode tempTab = symTabStack.top;
+    pTabNode tempTab = p;
     while (tempTab) {
         for (i = 0; i < HASHTAB_SIZE; i++) {
             pSymNode temp = tempTab->node[i];

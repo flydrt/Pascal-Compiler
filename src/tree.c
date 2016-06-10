@@ -10,11 +10,8 @@ pTree newTreeNode(Type type) {
 	}
 
 	p->type = type;
-	// switch(type) {
-	// 	case tPROGRAM: p->num = 2; break;
-	// 	case tPROGRAM_HEAD: p->num = 3; break;
-	// 	default : break;
-	// }
+
+	p->attr = ATTR_NONE;
 
 	p->lineno = lineno;
 

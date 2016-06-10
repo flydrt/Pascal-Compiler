@@ -3,7 +3,7 @@
 
 #include "symtab.h"
 
-void printSymTab();
+void printSymTab(pTabNode p);
 void printSymNode(pSymNode temp, int indent);
 void printAttr(IDAttr attr);
 int isSimpleType(IDAttr attr);

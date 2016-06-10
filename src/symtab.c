@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "util.h"
 #include "symtab.h"
 #include "error.h"
 #include "tree.h"
+
+int rnameCount = 0;
 
 pSymNode traverseSyntaxTree(pTree root) {
 	if (root == NULL)
@@ -20,8 +23,10 @@ pSymNode traverseSyntaxTree(pTree root) {
 			if(insertSymNode(p)) {
 				//double define error
 				//To do
+				//nothing?
 			}
 			traverseSyntaxTree(root->child[2]);
+			initRname(root->symtab);
 			break;
 		}
 		case tROUTINE: {
@@ -48,7 +53,9 @@ pSymNode traverseSyntaxTree(pTree root) {
 			root->symtab = pushSymTab(hashtab);
 			traverseSyntaxTree(root->child[1]);
 			traverseSyntaxTree(root->child[2]);
+//			printSymTab(root->symtab);
 			popSymTab();
+			initRname(root->symtab);
 			traverseSyntaxTree(root->child[0]);
 			break;
 		}
@@ -58,6 +65,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 			traverseSyntaxTree(root->child[1]);
 			traverseSyntaxTree(root->child[2]);
 			popSymTab();
+			initRname(root->symtab);
 			traverseSyntaxTree(root->child[0]);
 			break;
 		}
@@ -173,28 +181,152 @@ pSymNode traverseSyntaxTree(pTree root) {
 		}
 		case ASSIGN_STMT_1: {
 			pSymNode p = searchID(root->child[1]->data.stringVal);
-			//To do p is NULL
+			if (!p) {
+				//can't find id
+				parseError(UNDECL_ID, root->child[1]->lineno, root->child[1]->data.stringVal);
+
+				traverseSyntaxTree(root->child[0]);
+				return NULL;
+			}
+			if (p->type != TYPE_VAR) {
+				//p is not var
+				parseError(NOT_VAR, root->child[1]->lineno, root->child[1]->data.stringVal);
+
+				traverseSyntaxTree(root->child[0]);
+				return NULL;
+			}
 			IDAttr attr = getAttr(p);
 			if (attr == ATTR_NONE) {
 				//To do
+				//nothing?
 			}
 			traverseSyntaxTree(root->child[2]);
 			if (root->child[2]->attr == attr) {
 				//nothing
 			}
-			else if (attr == ATTR_INTEGER && root->child[2]->attr == ATTR_REAL) {
+			else if (attr == ATTR_REAL && root->child[2]->attr == ATTR_INTEGER) {
 				//nothing
+				//integer to real
 			}
 			else {
 				//To do
+				parseError(ASSIGN_TYPE_NOT_MATCH, root->child[1]->lineno, NULL);
 			}
+
 			traverseSyntaxTree(root->child[0]);
+			break;
+		}
+		case ASSIGN_STMT_2: {
+			pSymNode p = searchID(root->child[1]->data.stringVal);
+			if (!p) {
+				//can't find id
+				parseError(UNDECL_ID, root->child[1]->lineno, root->child[1]->data.stringVal);
+
+				traverseSyntaxTree(root->child[0]);
+				return NULL;
+			}
+			if (p->type != TYPE_VAR) {
+				//p is not var
+				parseError(NOT_VAR, root->child[1]->lineno, root->child[1]->data.stringVal);
+
+				traverseSyntaxTree(root->child[0]);
+				return NULL;
+			}
+			IDAttr attr = getAttr(p);
+			if (attr == ATTR_NONE) {
+				//To do
+				//nothing?
+			}
+			traverseSyntaxTree(root->child[2]);
+			if (root->child[2]->attr != p->link->first->attr) {
+				parseError(ARRAY_INDEX_TYPE_NOT_MATCH, root->child[2]->lineno, NULL);
+			}
+
+			traverseSyntaxTree(root->child[3]);
+			if (root->child[3]->attr != attr) {
+				//To do
+				parseError(ARRAY_TYPE_NOT_MATCH, root->child[1]->lineno, NULL);
+			}
+
+			traverseSyntaxTree(root->child[0]);
+			break;
+		}
+		case ASSIGN_STMT_3: {
+			pSymNode p = searchID(root->child[1]->data.stringVal);
+			char * name = root->child[2]->data.stringVal;
+			if (!p) {
+				//can't find id
+				parseError(UNDECL_ID, root->child[1]->lineno, root->child[1]->data.stringVal);
+
+				traverseSyntaxTree(root->child[0]);
+				return NULL;
+			}
+			if (p->type != TYPE_VAR) {
+				//p is not var
+				parseError(NOT_VAR, root->child[1]->lineno, root->child[1]->data.stringVal);
+
+				traverseSyntaxTree(root->child[0]);
+				return NULL;
+			}
+			if (p->attr != ATTR_RECORD) {
+				//To do
+				parseError(NOT_RECORD, root->child[1]->lineno, root->child[1]->data.stringVal);
+
+				traverseSyntaxTree(root->child[0]);
+				return NULL;
+			}
+
+			pSymNode temp = p->link->first;
+			while (temp) {
+				if (!strcmp(temp->name, name)) {
+					break;
+				}
+				temp = temp->next_link;
+			}
+			if (temp == NULL) {
+				//To do
+				//can't find record member
+				parseError(NOT_RECORD_MEMBER, root->child[2]->lineno, name);
+
+				traverseSyntaxTree(root->child[0]);
+				return NULL;
+			}
+
+			IDAttr attr = getAttr(temp);
+			traverseSyntaxTree(root->child[3]);
+			if (attr != root->child[3]->attr) {
+				//To do
+				parseError(ASSIGN_TYPE_NOT_MATCH, root->child[3]->lineno, NULL);
+			}
+
+			traverseSyntaxTree(root->child[0]);
+			break;
+		}
+		case PROC_STMT_ID: {
+			//To do
+			break;
+		}
+		case PROC_STMT_ID_ARGS: {
+			//To do
+			break;
+		}
+		case tSYS_PROC: {
+			//To do
+			break;
+		}
+		case PROC_STMT_SYS_EXPR: {
+			//To do
+			break;
+		}
+		case PROC_STMT_READ: {
+			//To do
 			break;
 		}
 		case IF_STMT: {
 			traverseSyntaxTree(root->child[1]);
 			if (root->child[1]->attr != ATTR_BOOL) {
 				//To do
+				parseError(IF_STMT_NOT_BOOL, root->child[1]->lineno, NULL);
 			}
 			traverseSyntaxTree(root->child[2]);
 			traverseSyntaxTree(root->child[3]);
@@ -206,6 +338,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 			traverseSyntaxTree(root->child[2]);
 			if (root->child[2]->attr != ATTR_BOOL) {
 				//To do
+				parseError(REPEAT_STMT_NOT_BOOL, root->child[1]->lineno, NULL);
 			}
 			traverseSyntaxTree(root->child[0]);
 			break;
@@ -214,6 +347,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 			traverseSyntaxTree(root->child[1]);
 			if (root->child[1]->attr != ATTR_BOOL) {
 				//To do
+				parseError(WHILE_STMT_NOT_BOOL, root->child[1]->lineno, NULL);
 			}
 			traverseSyntaxTree(root->child[2]);
 			traverseSyntaxTree(root->child[0]);
@@ -222,20 +356,36 @@ pSymNode traverseSyntaxTree(pTree root) {
 		case FOR_STMT_DOWNTO:
 		case FOR_STMT_TO: {
 			pSymNode p = searchID(root->child[1]->data.stringVal);
-			//To do p is NULL
+			if (!p) {
+				//can't find id
+				parseError(UNDECL_ID, root->child[1]->lineno, root->child[1]->data.stringVal);
+
+				traverseSyntaxTree(root->child[0]);
+				return NULL;
+			}
+			if (p->type != TYPE_VAR) {
+				//p is not var
+				parseError(NOT_VAR, root->child[1]->lineno, root->child[1]->data.stringVal);
+
+				traverseSyntaxTree(root->child[0]);
+				return NULL;
+			}
 			IDAttr attr = getAttr(p);
 			if (attr != ATTR_INTEGER) {
 				//To do
+				parseError(FOR_STMT_ERROR, root->child[1]->lineno, NULL);
 			}
 
 			traverseSyntaxTree(root->child[2]);
 			if (root->child[2]->attr != ATTR_INTEGER) {
 				//To do
+				parseError(FOR_STMT_ERROR, root->child[1]->lineno, NULL);
 			}
 
 			traverseSyntaxTree(root->child[3]);
 			if (root->child[3]->attr != ATTR_INTEGER) {
 				//To do
+				parseError(FOR_STMT_ERROR, root->child[1]->lineno, NULL);
 			}
 
 			traverseSyntaxTree(root->child[4]);
@@ -246,6 +396,9 @@ pSymNode traverseSyntaxTree(pTree root) {
 			traverseSyntaxTree(root->child[1]);
 			if (root->child[1]->attr != ATTR_INTEGER && root->child[1]->attr != ATTR_CHAR) {
 				//To do
+				parseError(CASE_STMT_ERROR, root->child[1]->lineno, NULL);
+
+				traverseSyntaxTree(root->child[0]);
 				break;
 			}
 			IDAttr attr = root->child[1]->attr;
@@ -256,10 +409,12 @@ pSymNode traverseSyntaxTree(pTree root) {
 
 				if (attr != temp->attr) {
 					//To do
+					parseError(CASE_STMT_NOT_MATCH, temp->lineno, NULL);
 					break;
 				}
 				temp = temp->child[0];
 			}
+
 			traverseSyntaxTree(root->child[0]);
 			break;
 		}
@@ -275,6 +430,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 				}
 				default: {
 					//To do
+					parseError(CASE_STMT_ERROR, root->child[1]->lineno, NULL);
 					break;
 				}
 			}
@@ -286,6 +442,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 			if (p) {
 				if (p->type != TYPE_CONST) {
 					//To do
+					parseError(NOT_CONST, root->child[1]->lineno, root->child[1]->data.stringVal);
 				}
 				else {
 					if (p->attr == ATTR_INTEGER || p->attr == ATTR_CHAR) {
@@ -293,6 +450,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 					}
 					else {
 						//To do
+						parseError(CASE_STMT_ERROR, root->child[1]->lineno, NULL);
 					}
 				}
 			}
@@ -325,6 +483,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 			}
 			else {
 				//To do
+				parseError(EXPR_TYPE_ERROR, root->child[1]->lineno, NULL);
 			}
 			traverseSyntaxTree(root->child[0]);
 			break;
@@ -345,6 +504,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 			}
 			else {
 				//To do
+				parseError(EXPR_TYPE_ERROR, root->child[1]->lineno, NULL);
 			}
 			break;
 		}
@@ -361,6 +521,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 			}
 			else {
 				//To do
+				parseError(EXPR_TYPE_ERROR, root->child[1]->lineno, NULL);
 			}
 			break;
 		}
@@ -378,10 +539,12 @@ pSymNode traverseSyntaxTree(pTree root) {
 				else {
 					//string-string, char-char, real-real
 					//To do
+					parseError(EXPR_TYPE_ERROR, root->child[1]->lineno, NULL);
 				}
 			}
 			else {
 				//To do
+				parseError(EXPR_TYPE_ERROR, root->child[1]->lineno, NULL);
 			}
 			break;
 		}
@@ -398,6 +561,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 			}
 			else {
 				//To do
+				parseError(EXPR_TYPE_ERROR, root->child[1]->lineno, NULL);
 			}
 			break;
 		}
@@ -410,6 +574,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 			}
 			else {
 				//To do
+				parseError(EXPR_TYPE_ERROR, root->child[1]->lineno, NULL);
 			}
 			break;
 		}
@@ -422,6 +587,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 			}
 			else {
 				//To do
+				parseError(EXPR_TYPE_ERROR, root->child[1]->lineno, NULL);
 			}
 			break;
 		}
@@ -430,8 +596,12 @@ pSymNode traverseSyntaxTree(pTree root) {
 		case FACTOR_ID: {
 			pSymNode p = searchID(root->data.stringVal);
 			if (p) {
-				root->attr = p->attr;
-				return p;
+				if (p->type == TYPE_TYPE) {
+					parseError(IS_TYPE, root->lineno, root->data.stringVal);
+					root->attr = ATTR_NONE;
+					return NULL;
+				}
+				root->attr = getAttr(p);
 			}
 			else {
 				//can't find id
@@ -465,13 +635,19 @@ pSymNode traverseSyntaxTree(pTree root) {
 					//num not match
 					parseError(FUNC_ARGS_NUM_NOT_MATCH, root->child[2]->lineno, NULL);
 				}
-
-				return p;
 			}
 			else {
 				//can't find id
 				parseError(UNDECL_ID, root->child[1]->lineno, root->child[1]->data.stringVal);
 			}
+			break;
+		}
+		case tSYS_FUNCT: {
+			//To do
+			break;
+		}
+		case FACTOR_SYS_FUNC_ARGS: {
+			//To do
 			break;
 		}
 		case FACTOR_CONST: {
@@ -487,6 +663,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 					}
 					break;
 				}
+				default: root->attr = root->child[1]->attr = ATTR_NONE; break;
 			}
 			break;
 		}
@@ -500,6 +677,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 			}
 			else {
 				//To do
+				parseError(EXPR_TYPE_ERROR, root->child[1]->lineno, NULL);
 			}
 			break;
 		}
@@ -510,19 +688,49 @@ pSymNode traverseSyntaxTree(pTree root) {
 			}
 			else {
 				//To do
+				parseError(EXPR_TYPE_ERROR, root->child[1]->lineno, NULL);
 			}
 			break;
 		}
 		case FACTOR_ARRAY: {
-			//To do
+			pSymNode p = searchID(root->child[1]->data.stringVal);
+			if (!p) {
+				//can't find id
+				parseError(UNDECL_ID, root->child[1]->lineno, root->child[1]->data.stringVal);
+				return NULL;
+			}
+			if (p->type != TYPE_VAR) {
+				//p is not var
+				parseError(NOT_VAR, root->child[1]->lineno, root->child[1]->data.stringVal);
+				return NULL;
+			}
+			IDAttr attr = getAttr(p);
+			if (attr == ATTR_NONE) {
+				//To do
+				//nothing?
+			}
+			traverseSyntaxTree(root->child[2]);
+			if (root->child[2]->attr != p->link->first->attr) {
+				parseError(ARRAY_INDEX_TYPE_NOT_MATCH, root->child[2]->lineno, NULL);
+			}
+
+			root->attr = attr;
+
 			break;
 		}
 		case FACTOR_RECORD: {
 			pSymNode p = searchID(root->child[1]->data.stringVal);
 			char * name = root->child[2]->data.stringVal;
 			if (p) {
+				if (p->type != TYPE_VAR) {
+					//p is not var
+					parseError(NOT_VAR, root->child[1]->lineno, root->child[1]->data.stringVal);
+					return NULL;
+				}
 				if (p->attr != ATTR_RECORD) {
 					//To do
+					parseError(NOT_RECORD, root->child[1]->lineno, root->child[1]->data.stringVal);
+					return NULL;
 				}
 				pSymNode temp = p->link->first;
 				while (temp) {
@@ -534,7 +742,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 				}
 				//To do
 				//can't find record
-				parseError(UNDECL_RECORD_ID, root->child[2]->lineno, name);
+				parseError(NOT_RECORD_MEMBER, root->child[2]->lineno, name);
 			}
 			else {
 				parseError(UNDECL_ID, root->child[1]->lineno, root->child[1]->data.stringVal);
@@ -691,8 +899,21 @@ pSymNode traverseSyntaxTree(pTree root) {
 					(p1->v).c = (root->child[1]->data).charVal;
 					break;
 				}
+				case tSYS_CON: {
+					char *temp = root->child[1]->data.stringVal;
+					if (!strcmp(temp, "true")) {
+						p1->attr = ATTR_BOOL;
+						p1->v.b = true;
+					}
+					else if (!strcmp(temp, "false")) {
+						p1->attr = ATTR_BOOL;
+						p1->v.b = false;
+					}
+					break;
+				}
 				default: {
 					//To do
+					parseError(SUBR_TYPE_ERROR, root->child[1]->lineno, NULL);
 					break;
 				}
 			}
@@ -710,8 +931,21 @@ pSymNode traverseSyntaxTree(pTree root) {
 					(p2->v).c = (root->child[2]->data).charVal;
 					break;
 				}
+				case tSYS_CON: {
+					char *temp = root->child[2]->data.stringVal;
+					if (!strcmp(temp, "true")) {
+						p2->attr = ATTR_BOOL;
+						p2->v.b = true;
+					}
+					else if (!strcmp(temp, "false")) {
+						p2->attr = ATTR_BOOL;
+						p2->v.b = false;
+					}
+					break;
+				}
 				default: {
 					//To do
+					parseError(SUBR_TYPE_ERROR, root->child[2]->lineno, NULL);
 					break;
 				}
 			}
@@ -719,6 +953,32 @@ pSymNode traverseSyntaxTree(pTree root) {
 
 			if (p1->attr != p2->attr) {
 				//To do
+				parseError(SUBR_TYPE_NOT_MATCH, root->child[1]->lineno, NULL);
+			}
+			else {
+				//To do
+				//compare
+				switch (p1->attr) {
+					case ATTR_INTEGER:
+						if (p1->v.i > p2->v.i) {
+							//To do
+							parseError(SUBR_OVER, root->child[1]->lineno, NULL);
+						}
+						break;
+					case ATTR_CHAR:
+						if (p1->v.c > p2->v.c) {
+							//To do
+							parseError(SUBR_OVER, root->child[1]->lineno, NULL);
+						}
+						break;
+					case ATTR_BOOL:
+						if (p1->v.b > p2->v.b) {
+							//To do
+							parseError(SUBR_OVER, root->child[1]->lineno, NULL);
+						}
+						break;
+					default: break;
+				}
 			}
 
 			return symbol;
@@ -771,10 +1031,15 @@ pSymNode traverseSyntaxTree(pTree root) {
 			pSymNode arrayType = traverseSyntaxTree(root->child[2]);
 			symbol->link->attr = arrayType->attr;
 			switch (arrayType->attr) {
+				case ATTR_BOOL:
 				case ATTR_INTEGER:
+				case ATTR_CHAR: {
+					break;
+				}
 				case ATTR_REAL:
-				case ATTR_CHAR:
 				case ATTR_STRING: {
+					//To do
+					//has been done before
 					break;
 				}
 				default: {
@@ -998,14 +1263,19 @@ IDAttr getAttr(pSymNode p) {
 	return ATTR_NONE;
 }
 
-//IDAttr findAttrbyName(char *name) {
-//	pSymNode p = searchID(name);
-//	if (p) {
-//		if (p->type != TYPE_VAR)
-//			return ATTR_NONE;
-//		else
-//			return p->attr;
-//	}
-//	else
-//		return ATTR_NONE;
-//}
+void initRname(pTabNode p) {
+	int i;
+	pTabNode tempTab = p;
+	char tempBuf[NAME_LEN];
+	while (tempTab) {
+		for (i = 0; i < HASHTAB_SIZE; i++) {
+			pSymNode temp = tempTab->node[i];
+			while (temp) {
+				sprintf(tempBuf, "%s%d", temp->name, rnameCount++);
+				strcpy(temp->rname, tempBuf);
+				temp = temp->next;
+			}
+		}
+		tempTab = tempTab->next;
+	}
+}

@@ -22,7 +22,7 @@ int isDoubleDefined(pSymNode t, pSymNode p);
 int insertSymNode(pSymNode p);
 int insertSymNode2PreviousTab(pSymNode p);
 IDAttr getAttr(pSymNode p);
-//IDAttr findAttrbyName(char *name);
+void initRname(pTabNode p);
 
 //Interface for code generation
 pSymNode searchIDWithinScope(char * name, pTabNode symtab, int * ip);

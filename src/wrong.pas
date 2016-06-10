@@ -1,27 +1,18 @@
 program wrong_example;
-const
-    a = true;
-    b = false;
-    c = 123;
-    d = 2.7;
-
-type
-    e = boolean;
-    f = integer;
-    g = record
-        a : real;
-        b : fa;
-        c : array [-1..4] of string;
-    end;
-    h = array [1..3] of g;
-    i = (what, is, how);
-
 var
+    c : char;
     o : boolean;
-    p, q : g;
-    t, u : (a, BB, CC, DD, EE);
-    v : i;
+    p, q : integer;
+    t, u : (AA, BB, CC, DD, EE);
+    v : real;
+    a : record
+        a : real;
+        b : integer;
+    end;
 
 begin
-    f := 1 + 2;
+    case a.b of
+    1: o := true;
+    2: o := false;
+    end;
 end.
