@@ -116,6 +116,7 @@ pTree find_node(Type type,int num,pTree child0,pTree child1,pTree child2,pTree c
                         break;
                     case tSTRING:
                     case tID:
+					case tSYS_CON:
                         if(strcmp(p->node->data.stringVal,parent->data.stringVal)==0)
                             flag =1;
                         break;
@@ -170,6 +171,7 @@ struct dag *new_node(Type type,int num,pTree child0,pTree child1,pTree child2,pT
                 break;
             case tSTRING:
             case tID:
+			case tSYS_CON:
                 tmp->data.stringVal = copyString(parent->data.stringVal);
                 break;
             default:
