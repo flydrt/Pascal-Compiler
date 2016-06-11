@@ -1,18 +1,24 @@
 program wrong_example;
-var
-    c : char;
-    o : boolean;
-    p, q : integer;
-    t, u : (AA, BB, CC, DD, EE);
-    v : real;
-    a : record
-        a : real;
-        b : integer;
+type
+    ww = record
+        x : integer;
+        y : real;
+        z : char;
     end;
+var
+    x : integer;
+    c : ww;
+
+procedure p1(x:integer; y:real);
+var
+    z : char;
 
 begin
-    case a.b of
-    1: o := true;
-    2: o := false;
-    end;
+    z := 'c';
+end;
+
+begin
+
+p1(1, c.z);
+
 end.

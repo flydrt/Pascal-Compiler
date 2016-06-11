@@ -13,8 +13,8 @@ letter [a-zA-Z]
 identifier [a-z]([_a-z0-9])*
 newline \n
 whitespace [ \t]+
-char \'.\'
-string \".*\"
+char '([^']|\")' 
+string \'(\\.|[^\'])(\\.|[^\'])+\'
 
 sys_funct "abs"|"chr"|"odd"|"ord"|"pred"|"sqr"|"sqrt"|"succ"
 sys_con "maxint"|"maxlongint"|"true"|"false"|"nil"

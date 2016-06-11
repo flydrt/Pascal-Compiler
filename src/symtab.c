@@ -303,26 +303,79 @@ pSymNode traverseSyntaxTree(pTree root) {
 			break;
 		}
 		case PROC_STMT_ID: {
-			//To do
+			pSymNode p = searchID(root->data.stringVal);
+			if (p) {
+				if (p->type != TYPE_PROC) {
+					parseError(NOT_PROC, root->lineno, root->data.stringVal);
+
+					traverseSyntaxTree(root->child[0]);
+					return NULL;
+				}
+				if (p->next_link != NULL) {
+					parseError(PROC_ARGS_LOST, root->lineno, root->data.stringVal);
+				}
+			}
+			else {
+				//can't find id
+				parseError(UNDECL_ID, root->lineno, root->data.stringVal);
+			}
+
+			traverseSyntaxTree(root->child[0]);
 			break;
 		}
 		case PROC_STMT_ID_ARGS: {
-			//To do
-			traverseSyntaxTree(root->child[2]);
+			pSymNode p = searchID(root->child[1]->data.stringVal);
+			if (p) {
+				if (p->type != TYPE_PROC) {
+					parseError(NOT_PROC, root->child[1]->lineno, root->child[1]->data.stringVal);
+				}
+
+				pTree temp = root->child[2];
+				pSymNode tempSym = p->next_link;
+				while (temp && tempSym) {
+					traverseSyntaxTree(temp);
+					if (temp->attr != getAttr(tempSym)) {
+						//args not match
+						//To do
+						if (temp->attr == ATTR_INTEGER && getAttr(tempSym) == ATTR_REAL) {
+							//nothing
+						}
+						else {
+							parseError(PROC_ARGS_NOT_MATCH, temp->lineno, tempSym->name);
+						}
+					}
+
+					tempSym = tempSym->next_link;
+					temp = temp->child[0];
+				}
+				if (temp || tempSym) {
+					//num not match
+					parseError(PROC_ARGS_NUM_NOT_MATCH, root->child[2]->lineno, NULL);
+				}
+			}
+			else {
+				//can't find id
+				parseError(UNDECL_ID, root->child[1]->lineno, root->child[1]->data.stringVal);
+			}
+
+			traverseSyntaxTree(root->child[0]);
 			break;
 		}
 		case tSYS_PROC: {
 			//To do
+			traverseSyntaxTree(root->child[0]);
 			break;
 		}
 		case PROC_STMT_SYS_EXPR: {
 			//To do
 			traverseSyntaxTree(root->child[3]);
+			traverseSyntaxTree(root->child[0]);
 			break;
 		}
 		case PROC_STMT_READ: {
 			//To do
 			traverseSyntaxTree(root->child[1]);
+			traverseSyntaxTree(root->child[0]);
 			break;
 		}
 		case IF_STMT: {
@@ -604,6 +657,9 @@ pSymNode traverseSyntaxTree(pTree root) {
 					root->attr = ATTR_NONE;
 					return NULL;
 				}
+				if (p->type == TYPE_FUNC && p->next_link != NULL) {
+					parseError(FUNC_ARGS_LOST, root->lineno, root->data.stringVal);
+				}
 				root->attr = getAttr(p);
 			}
 			else {
@@ -625,10 +681,15 @@ pSymNode traverseSyntaxTree(pTree root) {
 				pSymNode tempSym = p->next_link;
 				while (temp && tempSym) {
 					traverseSyntaxTree(temp);
-					if (temp->attr != tempSym->attr) {
+					if (temp->attr != getAttr(tempSym)) {
 						//args not match
 						//To do
-						parseError(FUNC_ARGS_NOT_MATCH, temp->lineno, tempSym->name);
+						if (temp->attr == ATTR_INTEGER && getAttr(tempSym) == ATTR_REAL) {
+							//nothing
+						}
+						else {
+							parseError(FUNC_ARGS_NOT_MATCH, temp->lineno, tempSym->name);
+						}
 					}
 
 					tempSym = tempSym->next_link;
@@ -651,6 +712,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 		}
 		case FACTOR_SYS_FUNC_ARGS: {
 			//To do
+			traverseSyntaxTree(root->child[2]);
 			break;
 		}
 		case FACTOR_CONST: {

@@ -9,7 +9,7 @@ typedef enum errorType {
 
     //not something
     NOT_FUNC, NOT_VAR, NOT_RECORD, NOT_RECORD_MEMBER,
-    NOT_CONST,
+    NOT_CONST, NOT_PROC,
 
     //is something
     IS_TYPE,
@@ -21,7 +21,8 @@ typedef enum errorType {
     //expression
     EXPR_TYPE_ERROR,
 
-    FUNC_ARGS_NOT_MATCH, FUNC_ARGS_NUM_NOT_MATCH,
+    FUNC_ARGS_NOT_MATCH, FUNC_ARGS_NUM_NOT_MATCH, FUNC_ARGS_LOST,
+    PROC_ARGS_NOT_MATCH, PROC_ARGS_NUM_NOT_MATCH, PROC_ARGS_LOST,
     ASSIGN_TYPE_NOT_MATCH
 } ErrorType;
 

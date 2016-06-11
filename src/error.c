@@ -53,6 +53,9 @@ void parseError(ErrorType et, int no, char *name) {
         case NOT_CONST:
             fprintf(stderr, "\t\"%s\" is not const\n\n", name);
             break;
+        case NOT_PROC:
+            fprintf(stderr, "\t\"%s\" is not procedure\n\n", name);
+            break;
 
         case IS_TYPE:
             fprintf(stderr, "\t\"%s\" is a TYPE identifier\n\n", name);
@@ -83,10 +86,22 @@ void parseError(ErrorType et, int no, char *name) {
             break;
 
         case FUNC_ARGS_NOT_MATCH:
-            fprintf(stderr, "\t\"%s\" wrong type\n\n", name);
+            fprintf(stderr, "\tArgument \"%s\" type doesn't match\n\n", name);
             break;
         case FUNC_ARGS_NUM_NOT_MATCH:
-            fprintf(stderr, "\twrong argc\n\n");
+            fprintf(stderr, "\tFunction wrong argc\n\n");
+            break;
+        case FUNC_ARGS_LOST:
+            fprintf(stderr, "\t\"%s\" function args are needed\n\n", name);
+            break;
+        case PROC_ARGS_NOT_MATCH:
+            fprintf(stderr, "\tArgument \"%s\" type doesn't match\n\n", name);
+            break;
+        case PROC_ARGS_NUM_NOT_MATCH:
+            fprintf(stderr, "\tProcedure wrong argc\n\n");
+            break;
+        case PROC_ARGS_LOST:
+            fprintf(stderr, "\t\"%s\" procedure args are needed\n\n", name);
             break;
         case ASSIGN_TYPE_NOT_MATCH:
             fprintf(stderr, "\tAssign failed, type not match\n\n");
