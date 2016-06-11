@@ -1,7 +1,9 @@
 program helloworld;
 var
-		inta, intb: integer;
+		inta, intb, intc: integer;
 begin
 		intb := 10 + 20;
-		inta := intb + 3;
+		intc := 5;
+		inta := intb * intc;
+		writeln(1+2);
 end.
