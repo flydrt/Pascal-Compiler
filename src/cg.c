@@ -103,14 +103,14 @@ void writeBss(){
 	CODE_OUTPUT("#bss section\n");
 	for(; i < bssList.size; i++){
 		switch(bssList.symList[i]->attr){
+			case ATTR_BOOL:
 			case ATTR_INTEGER:{
 				fprintf(codeFile,"\t\t.comm\t%s,4,4\n",bssList.symList[i]->rname);
 				break;
 			}
 			case ATTR_REAL:
 			case ATTR_CHAR:
-			case ATTR_STRING:
-			case ATTR_BOOL:break;
+			case ATTR_STRING:break;
 			default:break;
 		}
 	}
@@ -259,11 +259,12 @@ void CGStmtAssign(pTree node,int space){
 	//get the symbol table
 	pSymNode symnode = searchIDWithinScope(node->child[1]->data.stringVal
 		, currentStack.stack[currentStack.top - 1], &level);
+
 	insertBss(symnode);
 	//store the value in %edx
 	generateCode(node->child[2],space+1);		 
 	
-	if(symnode->attr == ATTR_INTEGER)
+	if(symnode->attr == ATTR_INTEGER || symnode->attr == ATTR_BOOL)
 		fprintf(codeFile,"\t\tmovl\t%%eax,%s\n",symnode->rname);
 
 }
@@ -304,8 +305,10 @@ void CGexpr(pTree node){
 			break;
 		}			
  		case eDIV:	{
- 			CODE_OUTPUT("\t\tpopl\t%edx\n");
-			CODE_OUTPUT("\t\tidiv\t%edx,%eax\n");
+ 			CODE_OUTPUT("\t\tmovl\t%eax,%ecx\n");
+ 			CODE_OUTPUT("\t\tpopl\t%eax\n");
+ 			CODE_OUTPUT("\t\tsubl\t%edx,%edx\n");
+			CODE_OUTPUT("\t\tidiv\t%ecx\n");
  			break;
  		} 		
  		case eRDIV: {
@@ -313,6 +316,18 @@ void CGexpr(pTree node){
 			CODE_OUTPUT("\t\tfdivs\t%edx,%eax\n");
  			break;
  		}		
+ 		case eMOD: {
+ 			CODE_OUTPUT("\t\tmovl\t%eax,%ecx\n");
+ 			CODE_OUTPUT("\t\tpopl\t%eax\n");
+ 			CODE_OUTPUT("\t\tsubl\t%edx,%edx\n");
+ 			CODE_OUTPUT("\t\tidiv\t%ecx\n");
+ 			CODE_OUTPUT("\t\tmovl\t%edx,%eax\n");
+ 			break;
+ 		}
+ 		case eAND: {
+ 			CODE_OUTPUT("\t\tpopl\t%edx\n");
+ 			CODE_OUTPUT("\t\tandl\t%edx,%eax\n");
+ 		}
 	}
 
 }
@@ -397,14 +412,20 @@ void CGCompare(pTree node){
 }
 
 void CGFactorConst(pTree node){
-	switch(node->child[1]->type){
-		case tINTEGER:{
+	switch(node->child[1]->attr){
+		case ATTR_BOOL:{
+			if(strcmp(node->child[1]->data.stringVal,"false")==0)
+				node->child[1]->data.intVal = 0;
+			else 
+				node->child[1]->data.intVal = 1;
+		}
+		case ATTR_INTEGER:{
 			fprintf(codeFile,"\t\tmovl\t$%d,%%eax\n",node->child[1]->data.intVal);
 			break;
 		}
-		case tREAL:
-		case tCHAR:break;
-		case tSTRING:{
+		case ATTR_REAL:
+		case ATTR_CHAR:break;
+		case ATTR_STRING:{
 			int index = insertDataSection(node->child[1]->data.stringVal);
 			if(index >= 0)
 				fprintf(codeFile, "\t\tmovl\t%s,%%eax\n", dataList[index].rname);
@@ -438,14 +459,14 @@ void CGFactorId(pTree node){
 		, currentStack.stack[currentStack.top - 1], &level);
 	insertBss(symnode);
 	switch(symnode->attr){
+		case ATTR_BOOL:
 		case ATTR_INTEGER:{
 			fprintf(codeFile,"\t\tmovl\t%s,%%eax\n",symnode->rname);
 			break;
 		}
 		case ATTR_REAL:
 		case ATTR_CHAR:
-		case ATTR_STRING:
-		case ATTR_BOOL:break;
+		case ATTR_STRING:break;
 		default:break;
 	}
 	
@@ -455,9 +476,8 @@ void CGFactorId(pTree node){
 void CGOutput(pTree node){
 	generateCode(node->child[3],10);
 	switch(node->child[3]->attr){
+		case ATTR_BOOL:
 		case ATTR_INTEGER: {
-			printf("INTEGER!\n");
-
 			if(strcmp("write",node->child[1]->data.stringVal)==0){
 				CODE_OUTPUT("\t\tpushl\t%eax\n");
 				CODE_OUTPUT("\t\tpushl\t%ebp\n");
@@ -497,7 +517,6 @@ void CGOutput(pTree node){
 			break;
 		}
 		case ATTR_CHAR:{
-			printf("CHAR!\n");
 			if(strcmp("write",node->child[1]->data.stringVal)==0){
 				CODE_OUTPUT("\t\tpushl\t%eax\n");
 				CODE_OUTPUT("\t\tpushl\t%ebp\n");
@@ -546,6 +565,7 @@ void CGInput(pTree node){
 	CODE_OUTPUT("\t\tpushl\t%eax\n");
 	CODE_OUTPUT("\t\tpushl\t%ebp\n");
 	switch(node->child[1]->attr){
+		case ATTR_BOOL:
 		case ATTR_INTEGER: {
 			//printf("READ INTEGER!\n");
 			CODE_OUTPUT("\t\tcall\t_read_int\n");
@@ -699,6 +719,8 @@ void generateCode(pTree node,int space){
  		}			
 
  		//expr
+ 		case eMOD: 				
+ 		case eAND: 	
  		case eRDIV:				
  		case eOR: 				
  		case eMINUS:			
@@ -710,11 +732,6 @@ void generateCode(pTree node,int space){
 
 			break;
 		}
- 		
- 		
- 		
- 		case eMOD: 				printf("eMOD\n");break;
- 		case eAND: 				printf("eAND\n");break;
 
 		case FACTOR_ID: 		{
 			printf("FACTOR_ID %s\n",node->data.stringVal);

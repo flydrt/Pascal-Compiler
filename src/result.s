@@ -3,36 +3,6 @@ exit_syscall = 0x1
 
 .data
 
-.globl str_0
-		.section .rodata
-		.align 4
-.LCstr_0:
-		.string "it is 1"
-		.data
-		.align 4
-		.type str_0 @object
-str_0:
-		.long .LCstr_0
-.globl str_1
-		.section .rodata
-		.align 4
-.LCstr_1:
-		.string "it is 2"
-		.data
-		.align 4
-		.type str_1 @object
-str_1:
-		.long .LCstr_1
-.globl str_2
-		.section .rodata
-		.align 4
-.LCstr_2:
-		.string "it is 3"
-		.data
-		.align 4
-		.type str_2 @object
-str_2:
-		.long .LCstr_2
 
 # main routine
 .text
@@ -41,46 +11,28 @@ str_2:
 _main:
 		pushl	%ebp
 		movl	%esp,%ebp
-		leal	a0,%eax
-		pushl	%eax
-		pushl	%ebp
-		call	_read_int
-		addl	$8,%esp
+		movl	$0,%eax
+		movl	%eax,a0
+		movl	$1,%eax
+		movl	%eax,b1
 		movl	a0,%eax
 		pushl	%eax
-		movl	$1,%eax
+		movl	b1,%eax
 		popl	%edx
-		cmpl	%edx,%eax
-		pushl	%edx
-		jne	case_LABEL0
-		movl	str_0,%eax
+		andl	%edx,%eax
 		pushl	%eax
 		pushl	%ebp
-		call	_writeln_string
+		call	_writeln_int
 		addl	$8,%esp
-case_LABEL0:
-		movl	$2,%eax
+		movl	b1,%eax
+		pushl	%eax
+		movl	b1,%eax
 		popl	%edx
-		cmpl	%edx,%eax
-		pushl	%edx
-		jne	case_LABEL1
-		movl	str_1,%eax
+		andl	%edx,%eax
 		pushl	%eax
 		pushl	%ebp
-		call	_writeln_string
+		call	_writeln_int
 		addl	$8,%esp
-case_LABEL1:
-		movl	$3,%eax
-		popl	%edx
-		cmpl	%edx,%eax
-		pushl	%edx
-		jne	case_LABEL2
-		movl	str_2,%eax
-		pushl	%eax
-		pushl	%ebp
-		call	_writeln_string
-		addl	$8,%esp
-case_LABEL2:
 		leave
 		ret
 
@@ -93,3 +45,4 @@ _start:
 
 #bss section
 		.comm	a0,4,4
+		.comm	b1,4,4
