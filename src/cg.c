@@ -40,6 +40,8 @@ void CGFor(pTree);
 void CGCompare(pTree);
 void CGRepeat(pTree);
 void CGWhile(pTree);
+void CGCaseStmt(pTree);
+void CGCaseExpr(pTree);
 
 void CGOutput(pTree);
 void CGInput(pTree);
@@ -59,6 +61,7 @@ void leave_field();
 
 
 void emit_main_begin(){
+	CODE_OUTPUT("# main routine\n");
 	CODE_OUTPUT(".text\n");
 	CODE_OUTPUT(".global _main\n");
 	CODE_OUTPUT("\t\t.type _main,@function\n");
@@ -313,6 +316,28 @@ void CGexpr(pTree node){
 
 }
 
+void CGCaseStmt(pTree node){
+
+	
+	generateCode(node->child[1],0);
+	CODE_OUTPUT("\t\tpushl\t%eax\n");
+	generateCode(node->child[2],0);
+}
+
+void CGCaseExpr(pTree node){
+	char case_end[100];
+	sprintf(case_end,"case_%s",CGGetLabel());
+	
+	generateCode(node->child[1],10);
+	CODE_OUTPUT("\t\tpopl\t%edx\n");
+	CODE_OUTPUT("\t\tcmpl\t%edx,%eax\n");
+	CODE_OUTPUT("\t\tpushl\t%edx\n");
+	fprintf(codeFile, "\t\tjne\t%s\n", case_end);
+	generateCode(node->child[2],10);
+	fprintf(codeFile,"%s:\n",case_end);
+}
+
+
 void CGCompare(pTree node){
 	generateCode(node->child[1],15);
 	CODE_OUTPUT("\t\tpushl\t%eax\n");
@@ -503,7 +528,7 @@ void CGInput(pTree node){
 	CODE_OUTPUT("\t\tpushl\t%ebp\n");
 	switch(node->child[1]->attr){
 		case ATTR_INTEGER: {
-			printf("READ INTEGER!\n");
+			//printf("READ INTEGER!\n");
 			CODE_OUTPUT("\t\tcall\t_read_int\n");
 			break;
 		}
@@ -516,7 +541,7 @@ void CGInput(pTree node){
 			break;
 		}
 		case ATTR_CHAR:{
-			printf("CHAR!\n");
+			printf(" READ CHAR!\n");
 			CODE_OUTPUT("\t\tcall\t_read_char\n");
 			break;
 		}
@@ -534,7 +559,7 @@ void generateCode(pTree node,int space){
 	switch(node->type){
 		case tPROGRAM:			{
 			emit_main_begin();
-			printf("tPROGRAM\n");
+
 			enter_field(node->symtab);
 
 			generateCode(node->child[2],space+1);		//routine
@@ -627,8 +652,18 @@ void generateCode(pTree node,int space){
 				generateCode(node->child[0],space+1);
  			break;
  		}
-		case CASE_STMT: 		printf("CASE_STMT\n");break;
- 		case CASE_EXPR_CONST:	printf("CASE_EXPR_CONST\n");break;
+		case CASE_STMT: 		{
+			printf("CASE_STMT\n");
+			CGCaseStmt(node);
+			break;
+		}
+ 		case CASE_EXPR_CONST:	{
+ 			printf("CASE_EXPR_CONST\n");
+ 			CGCaseExpr(node);
+ 			if(node->child[0]!=NULL)
+				generateCode(node->child[0],space+1);
+ 			break;
+ 		}
  		case CASE_EXPR_ID: 		printf("CASE_EXPR_ID\n");break;
  		case GOTO_STMT: 		printf("GOTO_STMT\n");break;
 

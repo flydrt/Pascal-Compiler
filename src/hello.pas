@@ -1,10 +1,10 @@
 program helloworld;
-var
-		a, b: integer;
+var a:integer;
 begin
-		a := 0;
-		for b:= 1 to 10 do
-				a := a +1;
-		writeln(a);
-
+	read(a);
+	case a of
+	1:writeln('it is 1');
+	2:writeln('it is 2');
+	3:writeln('it is 3');
+	end;
 end.
