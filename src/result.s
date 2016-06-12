@@ -46,11 +46,9 @@ _main:
 		pushl	%ebp
 		call	_read_int
 		addl	$8,%esp
-#-----------
 		movl	a0,%eax
 		pushl	%eax
-#-----------
-#**************
+		movl	$1,%eax
 		popl	%edx
 		cmpl	%edx,%eax
 		pushl	%edx
@@ -61,8 +59,7 @@ _main:
 		call	_writeln_string
 		addl	$8,%esp
 case_LABEL0:
-#**************
-#**************
+		movl	$2,%eax
 		popl	%edx
 		cmpl	%edx,%eax
 		pushl	%edx
@@ -73,8 +70,7 @@ case_LABEL0:
 		call	_writeln_string
 		addl	$8,%esp
 case_LABEL1:
-#**************
-#**************
+		movl	$3,%eax
 		popl	%edx
 		cmpl	%edx,%eax
 		pushl	%edx
@@ -85,7 +81,6 @@ case_LABEL1:
 		call	_writeln_string
 		addl	$8,%esp
 case_LABEL2:
-#**************
 		leave
 		ret
 

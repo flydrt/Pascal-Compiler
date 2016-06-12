@@ -42,6 +42,7 @@ void CGRepeat(pTree);
 void CGWhile(pTree);
 void CGCaseStmt(pTree);
 void CGCaseExpr(pTree);
+void CGHandleVar(pTree);
 
 void CGOutput(pTree);
 void CGInput(pTree);
@@ -329,6 +330,7 @@ void CGCaseExpr(pTree node){
 	sprintf(case_end,"case_%s",CGGetLabel());
 	
 	generateCode(node->child[1],10);
+	
 	CODE_OUTPUT("\t\tpopl\t%edx\n");
 	CODE_OUTPUT("\t\tcmpl\t%edx,%eax\n");
 	CODE_OUTPUT("\t\tpushl\t%edx\n");
@@ -410,6 +412,23 @@ void CGFactorConst(pTree node){
 			break;
 		}
 		default: printf("WARNING: FACTOR CONST DEFAULT\n");break;
+	}
+}
+
+void CGHandleVar(pTree node){
+	switch(node->type){
+		case tINTEGER:{
+			fprintf(codeFile,"\t\tmovl\t$%d,%%eax\n",node->data.intVal);
+			break;
+		}
+		case tSTRING:{
+			int index = insertDataSection(node->data.stringVal);
+			if(index >= 0)
+				fprintf(codeFile, "\t\tmovl\t%s,%%eax\n", dataList[index].rname);
+			printf("string data: %s\n",node->data.stringVal);
+			break;
+		}
+		default:printf("WARNING: HANDLE VAR DEFAULT\n");break;
 	}
 }
 
@@ -744,14 +763,15 @@ void generateCode(pTree node,int space){
  		case tSIMPLE_SUBRANGE:  printf("tSIMPLE_SUBRANGE\n");break;
  		case tSIMPLE_SUBRANGE_ID:printf("tSIMPLE_SUBRANGE_ID\n");break;
 		
-		case tINTEGER: 			{
-			printf("tINTEGER %d\n",node->data.intVal);
-			break;
-		}
- 		case tREAL: 			printf("tREAL\n");break;
- 		case tCHAR: 			printf("tCHAR\n");break;
- 		case tSTRING:		 	printf("tSTRING\n");break;
- 		case tID:				printf("tID: %s\n",node->data.stringVal);break;
+		case tINTEGER: 			
+ 		case tREAL: 			
+ 		case tCHAR: 			
+ 		case tSTRING:		 
+ 		case tID:	{
+ 			CGHandleVar(node);
+ 			printf("HANDLE VAR\n");
+ 			break;
+ 		}
 		default:printf("others\n");break;
 	}
 	// for(int i = 0 ; i < 5 ; i ++)
