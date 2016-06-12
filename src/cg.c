@@ -28,18 +28,6 @@ typedef struct strStruct{
 datalink dataList[MAXLIST];
 int dataCnt = 0;
 
-void insertDataSection(char* str){
-	int i = 0;
-	for(;i <= dataCnt; i++){
-		if(strcmp(dataList[i].string,str)==0)
-			break;
-	}
-	if(i <= dataCnt)
-		return;
-	dataCnt++;
-	strcpy(dataList[dataCnt].string,str);
-	
-}
 
 void emit_main_begin();
 void emit_main_end();
@@ -48,13 +36,18 @@ void CGStmtIf(pTree);
 void CGexpr();
 void CGFactorConst(pTree);
 void CGFactorId(pTree);
+void CGFor(pTree,int);
+void CGCompare(pTree);
+void CGRepeat(pTree);
+void CGWhile(pTree);
+
 void CGOutput(pTree);
 void CGInput(pTree);
 void CGloadAddress(pSymNode);
 char* CGGetLabel();
 
 void insertBss(pSymNode);
-void insertDataSection(char*);
+int insertDataSection(char*);
 void writeBss();
 void writeData();
 
@@ -118,17 +111,42 @@ void writeBss(){
 		}
 	}
 }
+int insertDataSection(char* str){
+	if(strcmp(str,"")==0)
+		return -1;
+	int i = 0;
+	for(;i < dataCnt; i++){
+		if(strcmp(dataList[i].string,str)==0)
+			return i;
+	}
+	strcpy(dataList[dataCnt].string,str);
+	sprintf(dataList[dataCnt].rname,"str_%d",dataCnt);
+	dataList[dataCnt++].size = 0;
+	return dataCnt - 1;
+}
 
 void writeData(){
 	int i = 0;
-	
+	for(;i < dataCnt; i++){
+		fprintf(dataFile, ".globl %s\n", dataList[i].rname);
+		DATA_OUTPUT("\t\t.section .rodata\n");
+		DATA_OUTPUT("\t\t.align 4\n");
+		fprintf(dataFile, ".LC%s:\n", dataList[i].rname);
+		fprintf(dataFile, "\t\t.string \"%s\"\n", dataList[i].string);
+		DATA_OUTPUT("\t\t.data\n");
+		DATA_OUTPUT("\t\t.align 4\n");
+		fprintf(dataFile, "\t\t.type %s @object\n", dataList[i].rname);
+		fprintf(dataFile, "%s:\n", dataList[i].rname);
+		fprintf(dataFile, "\t\t.long .LC%s\n", dataList[i].rname);
+	}
+	DATA_OUTPUT("\n");
 }
 
 char* CGGetLabel(){
 	static int label_cnt = 0;
 	char tmp[1024];
 	static char label[1024];
-	strcpy(label,"CG_LABEL");
+	strcpy(label,"LABEL");
 	sprintf(tmp,"%d",label_cnt);
 	strcat(label,tmp);
 	label_cnt++;
@@ -142,10 +160,53 @@ void emit_main_end(){
 }
 
 void CGStmtIf(pTree node){
-	char if_label[100],else_label[100],exit_label[100];
-	strcpy(if_label,CGGetLabel());
-	strcpy(else_label,CGGetLabel());
-	strcpy(exit_label,CGGetLabel());
+	char else_label[100],exit_label[100];
+	
+	sprintf(else_label,"if_else_%s",CGGetLabel());
+	sprintf(exit_label,"if_exit_%s",CGGetLabel());
+
+	generateCode(node->child[1],5);
+
+	CODE_OUTPUT("\t\tcmpl\t$1,%eax\n");
+	fprintf(codeFile, "\t\tjl\t%s\n",else_label);
+	
+	generateCode(node->child[2],5);
+	fprintf(codeFile, "\t\tjmp\t%s\n",exit_label);
+	fprintf(codeFile, "%s:\n",else_label);
+	generateCode(node->child[3],5);
+
+	fprintf(codeFile, "%s:\n",exit_label);
+}
+
+void CGRepeat(pTree node){
+	char repeat_start[100];
+	sprintf(repeat_start,"repeat_%s",CGGetLabel());
+	fprintf(codeFile, "%s:\n", repeat_start);
+	generateCode(node->child[1],2);
+	generateCode(node->child[2],2);
+
+	CODE_OUTPUT("\t\tcmpl\t$0,%eax\n");
+	fprintf(codeFile,"\t\tje\t%s\n",repeat_start);
+}
+
+void CGWhile(pTree node){
+	char while_start[100],while_end[100];
+	sprintf(while_start,"while_start_%s",CGGetLabel());
+	sprintf(while_end,"while_end_%s",CGGetLabel());
+
+	fprintf(codeFile, "%s:\n",while_start);
+	generateCode(node->child[1],2);
+	CODE_OUTPUT("\t\tcmpl\t$1,%eax\n");
+	fprintf(codeFile, "\t\tjl\t%s\n",while_end);
+
+	generateCode(node->child[2],2);
+	fprintf(codeFile, "\t\tjmp\t%s\n",while_start);
+	fprintf(codeFile, "%s:\n", while_end);
+}
+
+
+void CGFor(pTree node, int kind){
+	
 }
 
 void CGStmtAssign(pTree node,int space){
@@ -183,7 +244,8 @@ void CGexpr(pTree node){
  		case eMINUS:{
  			//CODE_OUTPUT("\t\tpopl\t%eax\n");
 			CODE_OUTPUT("\t\tpopl\t%edx\n");
-			CODE_OUTPUT("\t\tsubl\t%edx,%eax\n");
+			CODE_OUTPUT("\t\tsubl\t%eax,%edx\n");
+			CODE_OUTPUT("\t\tmovl\t%edx,%eax\n");
  			break;
  		}		
 		case ePLUS: {
@@ -211,6 +273,62 @@ void CGexpr(pTree node){
 
 }
 
+void CGCompare(pTree node){
+	generateCode(node->child[1],15);
+	CODE_OUTPUT("\t\tpushl\t%eax\n");
+	generateCode(node->child[2],15);
+	
+	switch(node->child[1]->attr){
+		case ATTR_INTEGER:{
+			CODE_OUTPUT("\t\tpopl\t%edx\n");
+			CODE_OUTPUT("\t\tcmpl\t%eax,%edx\n");
+			break;
+		}
+		case ATTR_CHAR:{
+			printf("node char\n");
+			break;
+		}
+		case ATTR_STRING:{
+			printf("node string\n");
+			break;
+		}
+		default:{
+			printf("node default\n");
+		}
+	}
+	CODE_OUTPUT("\t\tmovl\t$1,%eax\n");
+	char jumpLabel[100];
+	sprintf(jumpLabel,"j_%s",CGGetLabel());
+	switch(node->type){
+		case eGE:	{
+			fprintf(codeFile, "\t\tjge\t%s\n",jumpLabel);
+			break;
+		}		
+ 		case eGT:	{
+ 			fprintf(codeFile, "\t\tjg\t%s\n",jumpLabel);
+ 			break;
+ 		} 				
+ 		case eLE: 	{
+ 			fprintf(codeFile, "\t\tjle\t%s\n",jumpLabel);
+ 			break;
+ 		} 						
+ 		case eLT: 	{
+ 			fprintf(codeFile, "\t\tjl\t%s\n",jumpLabel);
+ 			break;
+ 		} 						
+ 		case eEQUAL: {
+ 			fprintf(codeFile, "\t\tje\t%s\n",jumpLabel);
+ 			break;
+ 		} 						
+ 		case eUNEQUAL: {
+ 			fprintf(codeFile, "\t\tjne\t%s\n",jumpLabel);
+ 			break;
+ 		}	
+	}
+	CODE_OUTPUT("\t\txorl\t%eax,%eax\n");
+	fprintf(codeFile, "%s:\n", jumpLabel);
+}
+
 void CGFactorConst(pTree node){
 	switch(node->child[1]->type){
 		case tINTEGER:{
@@ -220,7 +338,9 @@ void CGFactorConst(pTree node){
 		case tREAL:
 		case tCHAR:break;
 		case tSTRING:{
-			
+			int index = insertDataSection(node->child[1]->data.stringVal);
+			if(index >= 0)
+				fprintf(codeFile, "\t\tmovl\t%s,%%eax\n", dataList[index].rname);
 			printf("string data: %s\n",node->child[1]->data.stringVal);
 			break;
 		}
@@ -433,28 +553,58 @@ void generateCode(pTree node,int space){
  		case ASSIGN_STMT_2: 	printf("ASSIGN_STMT_2\n");break;
  		case ASSIGN_STMT_3: 	printf("ASSIGN_STMT_3\n");break;
 		case IF_STMT: 			{
-			printf("IF_STMT\n");
+			//printf("IF_STMT\n");
 			CGStmtIf(node);
 			if(node->child[0]!=NULL)
 				generateCode(node->child[0],space+1);
 			break;
 		}
- 		case REPEAT_STMT: 		printf("REPEAT_STMT\n");break;
- 		case WHILE_STMT: 		printf("WHILE_STMT\n");break;
- 		case FOR_STMT_TO: 		printf("FOR_STMT_TO\n");break;
- 		case FOR_STMT_DOWNTO: 	printf("FOR_STMT_DOWNTO\n");break;
+ 		case REPEAT_STMT: 		{
+ 			//printf("REPEAT_STMT\n");
+ 			CGRepeat(node);
+ 			if(node->child[0]!=NULL)
+				generateCode(node->child[0],space+1);
+ 			break;
+ 		}
+ 		case WHILE_STMT: 		{
+ 			//printf("WHILE_STMT\n");
+ 			CGWhile(node);
+ 			if(node->child[0]!=NULL)
+				generateCode(node->child[0],space+1);
+ 			break;
+ 		}
+ 		case FOR_STMT_TO: 		{
+ 			printf("FOR_STMT_TO\n");
+ 			CGFor(node,0);
+ 			if(node->child[0]!=NULL)
+				generateCode(node->child[0],space+1);
+ 			break;
+ 		}
+ 		case FOR_STMT_DOWNTO: 	{
+ 			printf("FOR_STMT_DOWNTO\n");
+ 			CGFor(node,1);
+ 			if(node->child[0]!=NULL)
+				generateCode(node->child[0],space+1);
+ 			break;
+ 		}
 		case CASE_STMT: 		printf("CASE_STMT\n");break;
  		case CASE_EXPR_CONST:	printf("CASE_EXPR_CONST\n");break;
  		case CASE_EXPR_ID: 		printf("CASE_EXPR_ID\n");break;
  		case GOTO_STMT: 		printf("GOTO_STMT\n");break;
 
-		case eGE:				printf("eGE\n");break;
- 		case eGT: 				printf("eGT\n");break;
- 		case eLE: 				printf("eLE\n");break;
- 		case eLT: 				printf("eLT\n");break;
- 		case eEQUAL: 			printf("eEQUAL\n");break;
- 		case eUNEQUAL: 			printf("eUNEQUAL\n");break;
+ 		//compare
+		case eGE:				
+ 		case eGT: 				
+ 		case eLE: 				
+ 		case eLT: 				
+ 		case eEQUAL: 			
+ 		case eUNEQUAL: {
+ 			printf("COMPARE\n");
+ 			CGCompare(node);
+ 			break;
+ 		}			
 
+ 		//expr
  		case eRDIV:				
  		case eOR: 				
  		case eMINUS:			
@@ -573,7 +723,7 @@ int CG_main(pTree root,char * target){
 	//write the program head
 	DATA_OUTPUT("sys_call_id = 0x80\n");
 	DATA_OUTPUT("exit_syscall = 0x1\n\n");
-	DATA_OUTPUT(".data\n");
+	DATA_OUTPUT(".data\n\n");
 
 	generateCode(root,0);
 
@@ -587,7 +737,7 @@ int CG_main(pTree root,char * target){
 	CODE_OUTPUT("");						
 	//<!-- to be continued -->
 	writeBss();
-
+	writeData();
 	fclose(codeFile);
 	fclose(dataFile);
 

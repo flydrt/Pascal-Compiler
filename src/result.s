@@ -2,23 +2,44 @@ sys_call_id = 0x80
 exit_syscall = 0x1
 
 .data
+
+
 .text
 .global _main
 		.type _main,@function
 _main:
 		pushl	%ebp
 		movl	%esp,%ebp
-		movl	$10,%eax
-		pushl	%eax
-		movl	$20,%eax
-		popl	%edx
-		addl	%edx,%eax
-		movl	%eax,intb0
-		movl	$5,%eax
-		movl	%eax,intc1
+		leal	intc1,%eax
 		pushl	%eax
 		pushl	%ebp
-		call	_writeln_string
+		call	_read_int
+		addl	$8,%esp
+while_start_LABEL0:
+		movl	intc1,%eax
+		pushl	%eax
+		movl	$0,%eax
+		popl	%edx
+		cmpl	%eax,%edx
+		movl	$1,%eax
+		jg	j_LABEL2
+		xorl	%eax,%eax
+j_LABEL2:
+		cmpl	$1,%eax
+		jl	while_end_LABEL1
+		movl	intc1,%eax
+		pushl	%eax
+		movl	$1,%eax
+		popl	%edx
+		subl	%eax,%edx
+		movl	%edx,%eax
+		movl	%eax,intc1
+		jmp	while_start_LABEL0
+while_end_LABEL1:
+		movl	intc1,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_writeln_int
 		addl	$8,%esp
 		leave
 		ret
@@ -31,5 +52,4 @@ _start:
 		int $sys_call_id
 
 #bss section
-		.comm	intb0,4,4
 		.comm	intc1,4,4
