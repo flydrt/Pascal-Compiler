@@ -9,16 +9,15 @@ var
     x : integer;
     c : ww;
 
-procedure p1(x:integer; y:real);
+function p1(x:integer; y:real): integer;
 var
     z : char;
 
 begin
-    z := 'c';
+    x := 1;
+    p1 := p1(1, 1.2);
 end;
 
 begin
-
-p1(1, c.z);
 
 end.

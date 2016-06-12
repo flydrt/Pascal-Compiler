@@ -103,8 +103,12 @@ void parseError(ErrorType et, int no, char *name) {
         case PROC_ARGS_LOST:
             fprintf(stderr, "\t\"%s\" procedure args are needed\n\n", name);
             break;
+
         case ASSIGN_TYPE_NOT_MATCH:
             fprintf(stderr, "\tAssign failed, type not match\n\n");
+            break;
+        case ASSIGN_TYPE_ERROR:
+            fprintf(stderr, "\tAssigning value to \"%s\" failed, \"%s\" is the wrong type!\n\n", name, name);
             break;
         default: break;
     }

@@ -23,7 +23,8 @@ typedef enum errorType {
 
     FUNC_ARGS_NOT_MATCH, FUNC_ARGS_NUM_NOT_MATCH, FUNC_ARGS_LOST,
     PROC_ARGS_NOT_MATCH, PROC_ARGS_NUM_NOT_MATCH, PROC_ARGS_LOST,
-    ASSIGN_TYPE_NOT_MATCH
+
+    ASSIGN_TYPE_NOT_MATCH, ASSIGN_TYPE_ERROR
 } ErrorType;
 
 void parseError(ErrorType et, int no, char *name);

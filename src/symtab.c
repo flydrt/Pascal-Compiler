@@ -188,9 +188,8 @@ pSymNode traverseSyntaxTree(pTree root) {
 				traverseSyntaxTree(root->child[0]);
 				return NULL;
 			}
-			if (p->type != TYPE_VAR) {
-				//p is not var
-				parseError(NOT_VAR, root->child[1]->lineno, root->child[1]->data.stringVal);
+			if (p->type != TYPE_VAR && p->type != TYPE_VALPARA && p->type != TYPE_VARPARA && p->type != TYPE_FUNC) {
+				parseError(ASSIGN_TYPE_ERROR, root->child[1]->lineno, root->child[1]->data.stringVal);
 
 				traverseSyntaxTree(root->child[0]);
 				return NULL;
@@ -225,9 +224,15 @@ pSymNode traverseSyntaxTree(pTree root) {
 				traverseSyntaxTree(root->child[0]);
 				return NULL;
 			}
-			if (p->type != TYPE_VAR) {
-				//p is not var
-				parseError(NOT_VAR, root->child[1]->lineno, root->child[1]->data.stringVal);
+//			if (p->type != TYPE_VAR) {
+//				//p is not var
+//				parseError(NOT_VAR, root->child[1]->lineno, root->child[1]->data.stringVal);
+//
+//				traverseSyntaxTree(root->child[0]);
+//				return NULL;
+//			}
+			if (p->type != TYPE_VAR && p->type != TYPE_VALPARA && p->type != TYPE_VARPARA && p->type != TYPE_FUNC) {
+				parseError(ASSIGN_TYPE_ERROR, root->child[1]->lineno, root->child[1]->data.stringVal);
 
 				traverseSyntaxTree(root->child[0]);
 				return NULL;
@@ -261,9 +266,15 @@ pSymNode traverseSyntaxTree(pTree root) {
 				traverseSyntaxTree(root->child[0]);
 				return NULL;
 			}
-			if (p->type != TYPE_VAR) {
-				//p is not var
-				parseError(NOT_VAR, root->child[1]->lineno, root->child[1]->data.stringVal);
+//			if (p->type != TYPE_VAR) {
+//				//p is not var
+//				parseError(NOT_VAR, root->child[1]->lineno, root->child[1]->data.stringVal);
+//
+//				traverseSyntaxTree(root->child[0]);
+//				return NULL;
+//			}
+			if (p->type != TYPE_VAR && p->type != TYPE_VALPARA && p->type != TYPE_VARPARA && p->type != TYPE_FUNC) {
+				parseError(ASSIGN_TYPE_ERROR, root->child[1]->lineno, root->child[1]->data.stringVal);
 
 				traverseSyntaxTree(root->child[0]);
 				return NULL;
@@ -419,9 +430,15 @@ pSymNode traverseSyntaxTree(pTree root) {
 				traverseSyntaxTree(root->child[0]);
 				return NULL;
 			}
-			if (p->type != TYPE_VAR) {
-				//p is not var
-				parseError(NOT_VAR, root->child[1]->lineno, root->child[1]->data.stringVal);
+//			if (p->type != TYPE_VAR) {
+//				//p is not var
+//				parseError(NOT_VAR, root->child[1]->lineno, root->child[1]->data.stringVal);
+//
+//				traverseSyntaxTree(root->child[0]);
+//				return NULL;
+//			}
+			if (p->type != TYPE_VAR && p->type != TYPE_VALPARA && p->type != TYPE_VARPARA && p->type != TYPE_FUNC) {
+				parseError(ASSIGN_TYPE_ERROR, root->child[1]->lineno, root->child[1]->data.stringVal);
 
 				traverseSyntaxTree(root->child[0]);
 				return NULL;
@@ -764,9 +781,15 @@ pSymNode traverseSyntaxTree(pTree root) {
 				parseError(UNDECL_ID, root->child[1]->lineno, root->child[1]->data.stringVal);
 				return NULL;
 			}
-			if (p->type != TYPE_VAR) {
-				//p is not var
-				parseError(NOT_VAR, root->child[1]->lineno, root->child[1]->data.stringVal);
+//			if (p->type != TYPE_VAR) {
+//				//p is not var
+//				parseError(NOT_VAR, root->child[1]->lineno, root->child[1]->data.stringVal);
+//				return NULL;
+//			}
+			if (p->type != TYPE_VAR && p->type != TYPE_VALPARA && p->type != TYPE_VARPARA && p->type != TYPE_FUNC) {
+				parseError(ASSIGN_TYPE_ERROR, root->child[1]->lineno, root->child[1]->data.stringVal);
+
+				traverseSyntaxTree(root->child[0]);
 				return NULL;
 			}
 			IDAttr attr = getAttr(p);
@@ -787,9 +810,15 @@ pSymNode traverseSyntaxTree(pTree root) {
 			pSymNode p = searchID(root->child[1]->data.stringVal);
 			char * name = root->child[2]->data.stringVal;
 			if (p) {
-				if (p->type != TYPE_VAR) {
-					//p is not var
-					parseError(NOT_VAR, root->child[1]->lineno, root->child[1]->data.stringVal);
+//				if (p->type != TYPE_VAR) {
+//					//p is not var
+//					parseError(NOT_VAR, root->child[1]->lineno, root->child[1]->data.stringVal);
+//					return NULL;
+//				}
+				if (p->type != TYPE_VAR && p->type != TYPE_VALPARA && p->type != TYPE_VARPARA && p->type != TYPE_FUNC) {
+					parseError(ASSIGN_TYPE_ERROR, root->child[1]->lineno, root->child[1]->data.stringVal);
+
+					traverseSyntaxTree(root->child[0]);
 					return NULL;
 				}
 				if (p->attr != ATTR_RECORD) {
