@@ -36,7 +36,7 @@ void CGStmtIf(pTree);
 void CGexpr();
 void CGFactorConst(pTree);
 void CGFactorId(pTree);
-void CGFor(pTree,int);
+void CGFor(pTree);
 void CGCompare(pTree);
 void CGRepeat(pTree);
 void CGWhile(pTree);
@@ -205,8 +205,48 @@ void CGWhile(pTree node){
 }
 
 
-void CGFor(pTree node, int kind){
+void CGFor(pTree node){
+	char for_start[100],for_end[100],jump[100];
+	int i;
+	sprintf(for_start,"for_start_%s",CGGetLabel());
+	sprintf(jump,"j_%s",CGGetLabel());
+	sprintf(for_end,"for_end_%s",CGGetLabel());
+
 	
+	generateCode(node->child[2],2);
+
+	int level;
+	pSymNode symnode = searchIDWithinScope(node->child[1]->data.stringVal
+		, currentStack.stack[currentStack.top - 1], &level);
+	insertBss(symnode);
+	fprintf(codeFile, "\t\tmovl\t%%eax,%s\n", symnode->rname);	//initial assign
+
+	fprintf(codeFile, "%s:\n",for_start);
+	fprintf(codeFile, "\t\tmovl\t%s,%%eax\n",symnode->rname );
+	CODE_OUTPUT("\t\tpushl\t%eax\n");
+	generateCode(node->child[3],2);
+	CODE_OUTPUT("\t\tpopl\t%edx\n");
+
+
+	if(node->type == FOR_STMT_DOWNTO){
+		CODE_OUTPUT("\t\tcmpl\t%eax,%edx\n");
+		CODE_OUTPUT("\t\tmovl\t$1,%eax\n");
+		fprintf(codeFile, "\t\tjge\t%s\n", jump);
+		CODE_OUTPUT("\t\txorl\t%eax,%eax\n");
+	} else {
+		CODE_OUTPUT("\t\tcmpl\t%eax,%edx\n");
+		CODE_OUTPUT("\t\tmovl\t$1,%eax\n");
+		fprintf(codeFile, "\t\tjle\t%s\n", jump);
+		CODE_OUTPUT("\t\txorl\t%eax,%eax\n");
+	}
+	fprintf(codeFile, "%s:\n", jump);
+	CODE_OUTPUT("\t\tcmpl\t$1,%eax\n");
+	fprintf(codeFile, "\t\tjl\t%s\n", for_end);
+	
+	generateCode(node->child[4],2);
+	fprintf(codeFile, "\t\tincl\t%s\n", symnode->rname);
+	fprintf(codeFile, "\t\tjmp\t%s\n",for_start);
+	fprintf(codeFile, "%s:\n", for_end);
 }
 
 void CGStmtAssign(pTree node,int space){
@@ -575,14 +615,14 @@ void generateCode(pTree node,int space){
  		}
  		case FOR_STMT_TO: 		{
  			printf("FOR_STMT_TO\n");
- 			CGFor(node,0);
+ 			CGFor(node);
  			if(node->child[0]!=NULL)
 				generateCode(node->child[0],space+1);
  			break;
  		}
  		case FOR_STMT_DOWNTO: 	{
  			printf("FOR_STMT_DOWNTO\n");
- 			CGFor(node,1);
+ 			CGFor(node);
  			if(node->child[0]!=NULL)
 				generateCode(node->child[0],space+1);
  			break;

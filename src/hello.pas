@@ -1,10 +1,10 @@
 program helloworld;
 var
-		inta, intb, intc: integer;
+		a, b: integer;
 begin
-		read(intc);
-		while intc > 0 do
-		intc := intc -1;
-		writeln(intc);
+		a := 0;
+		for b:= 1 to 10 do
+				a := a +1;
+		writeln(a);
 
 end.
