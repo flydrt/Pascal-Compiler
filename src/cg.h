@@ -6,5 +6,6 @@
 #include "symtab.h"
 #include "symNodeType.h"
 #include "tree.h"
+#include <string.h>
 
 #endif

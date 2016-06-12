@@ -1,9 +1,10 @@
 program helloworld;
 var
-		inta, intb, intc: integer;
+		a, b: integer;
 begin
-		intb := 10 + 20;
-		intc := 5;
-		inta := intb * intc;
-		writeln(1+2);
+		a := 0;
+		for b:= 1 to 10 do
+				a := a +1;
+		writeln(a);
+
 end.
