@@ -264,20 +264,20 @@ int get_num(Type type){
         case	tCHAR : numl = 51;break;
         case	tSTRING: numl = 52;break;
         case	tID: numl = 53;break;
-		case	FACTOR_ID,: numl = 54;break;
-		case	FACTOR_FUNC,: numl = 55;break;
+		case	FACTOR_ID: numl = 54;break;
+		case	FACTOR_FUNC: numl = 55;break;
 		case	FACTOR_CONST: numl = 56;break;
 		case	FACTOR_NOT: numl = 57;break;
-		case	FACTOR_MINUS,: numl = 58;break;
-		case	FACTOR_ARRAY,: numl = 59;break;
+		case	FACTOR_MINUS: numl = 58;break;
+		case	FACTOR_ARRAY: numl = 59;break;
 		case	FACTOR_RECORD: numl = 60;break;
-		case	PROC_STMT_ID,: numl = 61;break;
-		case	PROC_STMT_ID_ARGS,: numl = 62;break;
-		case	PROC_STMT_SYS_EXPR,: numl = 63;break;
+		case	PROC_STMT_ID: numl = 61;break;
+		case	PROC_STMT_ID_ARGS: numl = 62;break;
+		case	PROC_STMT_SYS_EXPR: numl = 63;break;
 		case	PROC_STMT_READ: numl = 64;break;
 		case    eRDIV:numl = 65;break;
 		case    tSYS_PROC :numl = 66;break;
-		case	FACTOR_SYS_FUNC_ARGS,: numl = 67;break;
+		case	FACTOR_SYS_FUNC_ARGS: numl = 67;break;
         default:
             break;
     }

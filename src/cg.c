@@ -3,6 +3,7 @@
 #define CODE_OUTPUT(str) fprintf(codeFile,"%s",str)
 #define MAXFIELD 100
 #define MAXLIST 1000
+#define MAXSTRING 2048
 
 FILE* codeFile = NULL;			//code file
 FILE* dataFile = NULL;			//data file
@@ -19,16 +20,43 @@ typedef struct{
 }SymList;
 SymList bssList;
 
+typedef struct strStruct{
+	char string[MAXSTRING];
+	char rname[100];
+	int size;
+}datalink;
+datalink dataList[MAXLIST];
+int dataCnt = 0;
+
+void insertDataSection(char* str){
+	int i = 0;
+	for(;i <= dataCnt; i++){
+		if(strcmp(dataList[i].string,str)==0)
+			break;
+	}
+	if(i <= dataCnt)
+		return;
+	dataCnt++;
+	strcpy(dataList[dataCnt].string,str);
+	
+}
 
 void emit_main_begin();
 void emit_main_end();
-void CGStmtAssign();
+void CGStmtAssign(pTree,int);
+void CGStmtIf(pTree);
 void CGexpr();
 void CGFactorConst(pTree);
 void CGFactorId(pTree);
 void CGOutput(pTree);
+void CGInput(pTree);
+void CGloadAddress(pSymNode);
+char* CGGetLabel();
+
 void insertBss(pSymNode);
+void insertDataSection(char*);
 void writeBss();
+void writeData();
 
 void generateCode(pTree,int);
 
@@ -46,11 +74,16 @@ void emit_main_begin(){
 	CODE_OUTPUT("\t\tmovl\t%esp,%ebp\n");
 
 	bssList.size = 0;
+	memset(dataList,0,sizeof(datalink)*MAXLIST);
 	int i = 0;
 	for(;i < MAXLIST; i++){
 		bssList.symList[i] = NULL;
 	}
+	
+
 }
+
+
 
 void insertBss(pSymNode node){
 	if(node == NULL)
@@ -86,10 +119,35 @@ void writeBss(){
 	}
 }
 
+void writeData(){
+	int i = 0;
+	
+}
+
+char* CGGetLabel(){
+	static int label_cnt = 0;
+	char tmp[1024];
+	static char label[1024];
+	strcpy(label,"CG_LABEL");
+	sprintf(tmp,"%d",label_cnt);
+	strcat(label,tmp);
+	label_cnt++;
+	return label;
+}
+
+
 void emit_main_end(){
 	CODE_OUTPUT("\t\tleave\n");
 	CODE_OUTPUT("\t\tret\n");
 }
+
+void CGStmtIf(pTree node){
+	char if_label[100],else_label[100],exit_label[100];
+	strcpy(if_label,CGGetLabel());
+	strcpy(else_label,CGGetLabel());
+	strcpy(exit_label,CGGetLabel());
+}
+
 void CGStmtAssign(pTree node,int space){
 	int level;
 	
@@ -143,7 +201,12 @@ void CGexpr(pTree node){
  			CODE_OUTPUT("\t\tpopl\t%edx\n");
 			CODE_OUTPUT("\t\tidiv\t%edx,%eax\n");
  			break;
- 		} 				
+ 		} 		
+ 		case eRDIV: {
+ 			CODE_OUTPUT("\t\tpopl\t%edx\n");
+			CODE_OUTPUT("\t\tfdivs\t%edx,%eax\n");
+ 			break;
+ 		}		
 	}
 
 }
@@ -155,8 +218,12 @@ void CGFactorConst(pTree node){
 			break;
 		}
 		case tREAL:
-		case tCHAR:
-		case tSTRING:break;
+		case tCHAR:break;
+		case tSTRING:{
+			
+			printf("string data: %s\n",node->child[1]->data.stringVal);
+			break;
+		}
 		default: printf("WARNING: FACTOR CONST DEFAULT\n");break;
 	}
 }
@@ -182,29 +249,124 @@ void CGFactorId(pTree node){
 
 
 void CGOutput(pTree node){
+	generateCode(node->child[3],10);
 	switch(node->child[3]->attr){
 		case ATTR_INTEGER: {
 			printf("INTEGER!\n");
+
+			if(strcmp("write",node->child[1]->data.stringVal)==0){
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
+				CODE_OUTPUT("\t\tpushl\t%ebp\n");
+				CODE_OUTPUT("\t\tcall\t_write_int\n");
+			} else if (strcmp("writeln",node->child[1]->data.stringVal)==0){
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
+				CODE_OUTPUT("\t\tpushl\t%ebp\n");
+				CODE_OUTPUT("\t\tcall\t_writeln_int\n");
+			}
 			break;
 		}
 		case ATTR_REAL:{
-			printf("REAL!\n");
+			printf("WARNING: we can't output real\n");
+			// if(strcmp("write",node->child[1]->data.stringVal)==0){
+			// 	CODE_OUTPUT("\t\tpushl\t%eax\n");
+			// 	CODE_OUTPUT("\t\tpushl\t%ebp\n");
+			// 	CODE_OUTPUT("\t\tcall\t_write_int\n");
+			// } else if (strcmp("writeln",node->child[1]->data.stringVal)==0){
+			// 	CODE_OUTPUT("\t\tpushl\t%eax\n");
+			// 	CODE_OUTPUT("\t\tpushl\t%ebp\n");
+			// 	CODE_OUTPUT("\t\tcall\t_writeln_int\n");
+			// } else {
+				
+			// }
 			break;
 		}
-		case ATTR_NONE:{
-			printf("NONE!\n");
+		case ATTR_STRING:{
+			if(strcmp("write",node->child[1]->data.stringVal)==0){
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
+				CODE_OUTPUT("\t\tpushl\t%ebp\n");
+				CODE_OUTPUT("\t\tcall\t_write_string\n");
+			} else if (strcmp("writeln",node->child[1]->data.stringVal)==0){
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
+				CODE_OUTPUT("\t\tpushl\t%ebp\n");
+				CODE_OUTPUT("\t\tcall\t_writeln_string\n");
+			}
 			break;
 		}
 		case ATTR_CHAR:{
 			printf("CHAR!\n");
+			if(strcmp("write",node->child[1]->data.stringVal)==0){
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
+				CODE_OUTPUT("\t\tpushl\t%ebp\n");
+				CODE_OUTPUT("\t\tcall\t_write_char\n");
+			} else if (strcmp("writeln",node->child[1]->data.stringVal)==0){
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
+				CODE_OUTPUT("\t\tpushl\t%ebp\n");
+				CODE_OUTPUT("\t\tcall\t_writeln_char\n");
+			} else {
+				
+			}
+			break;
+		}
+		case ATTR_NONE:{
+			printf("WRITE NONE!\n");
+			if(strcmp("write",node->child[1]->data.stringVal)==0){
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
+				CODE_OUTPUT("\t\tpushl\t%ebp\n");
+				CODE_OUTPUT("\t\tcall\t_write_int\n");
+			} else if(strcmp("writeln",node->child[1]->data.stringVal)==0){
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
+				CODE_OUTPUT("\t\tpushl\t%ebp\n");
+				CODE_OUTPUT("\t\tcall\t_writeln_int\n");
+			}
 			break;
 		}
 		default:{
-			printf("DEFAULT!\n");
+			printf("WRITE DEFAULT!\n");
 		}
 	}
-	generateCode(node->child[3],10);
+	CODE_OUTPUT("\t\taddl\t$8,%esp\n");
 }
+
+
+void CGloadAddress(pSymNode symnode){
+	fprintf(codeFile, "\t\tleal\t%s,%%eax\n",symnode->rname);
+}
+
+void CGInput(pTree node){
+	int level;
+	pSymNode symnode = searchIDWithinScope(node->child[1]->data.stringVal
+		, currentStack.stack[currentStack.top - 1], &level);
+
+	CGloadAddress(symnode);
+
+	CODE_OUTPUT("\t\tpushl\t%eax\n");
+	CODE_OUTPUT("\t\tpushl\t%ebp\n");
+	switch(node->child[1]->attr){
+		case ATTR_INTEGER: {
+			printf("READ INTEGER!\n");
+			CODE_OUTPUT("\t\tcall\t_read_int\n");
+			break;
+		}
+		case ATTR_REAL:{
+			printf("WARNING: we can't input real\n");
+			break;
+		}
+		case ATTR_STRING:{
+			CODE_OUTPUT("\t\tcall\t_read_string\n");
+			break;
+		}
+		case ATTR_CHAR:{
+			printf("CHAR!\n");
+			CODE_OUTPUT("\t\tcall\t_read_char\n");
+			break;
+		}
+		default:{
+			printf("READ default\n");
+		}
+	}
+	CODE_OUTPUT("\t\taddl\t$8,%esp\n");
+}
+
 
 void generateCode(pTree node,int space){
 	for(int i = 0;i < space; i++)
@@ -270,7 +432,13 @@ void generateCode(pTree node,int space){
 		}
  		case ASSIGN_STMT_2: 	printf("ASSIGN_STMT_2\n");break;
  		case ASSIGN_STMT_3: 	printf("ASSIGN_STMT_3\n");break;
-		case IF_STMT: 			printf("IF_STMT\n");break;
+		case IF_STMT: 			{
+			printf("IF_STMT\n");
+			CGStmtIf(node);
+			if(node->child[0]!=NULL)
+				generateCode(node->child[0],space+1);
+			break;
+		}
  		case REPEAT_STMT: 		printf("REPEAT_STMT\n");break;
  		case WHILE_STMT: 		printf("WHILE_STMT\n");break;
  		case FOR_STMT_TO: 		printf("FOR_STMT_TO\n");break;
@@ -287,6 +455,7 @@ void generateCode(pTree node,int space){
  		case eEQUAL: 			printf("eEQUAL\n");break;
  		case eUNEQUAL: 			printf("eUNEQUAL\n");break;
 
+ 		case eRDIV:				
  		case eOR: 				
  		case eMINUS:			
  		case eMUL: 				
@@ -299,7 +468,7 @@ void generateCode(pTree node,int space){
 		}
  		
  		
- 		case eRDIV:				printf("eRDIV\n");break;
+ 		
  		case eMOD: 				printf("eMOD\n");break;
  		case eAND: 				printf("eAND\n");break;
 
@@ -329,9 +498,17 @@ void generateCode(pTree node,int space){
  		case PROC_STMT_SYS_EXPR:{				//writeln, write
  			printf("PROC_STMT_SYS_EXPR\n");
  			CGOutput(node);
+ 			if(node->child[0] != NULL)
+ 				generateCode(node->child[0],space+1);
  			break;
  		}
- 		case PROC_STMT_READ:	printf("PROC_STMT_READ\n");break;
+ 		case PROC_STMT_READ:	{
+ 			printf("PROC_STMT_READ\n");
+ 			CGInput(node);
+ 			if(node->child[0] != NULL)
+ 				generateCode(node->child[0],space+1);
+ 			break;
+ 		}
 
 		case tSYS_TYPE: 		printf("tSYS_TYPE\n");break;
  		case tSYS_FUNCT: 		printf("tSYS_FUNCT\n");break;

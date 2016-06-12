@@ -16,17 +16,10 @@ _main:
 		movl	%eax,intb0
 		movl	$5,%eax
 		movl	%eax,intc1
-		movl	intb0,%eax
 		pushl	%eax
-		movl	intc1,%eax
-		popl	%edx
-		imul	%edx,%eax
-		movl	%eax,inta3
-		movl	$1,%eax
-		pushl	%eax
-		movl	$2,%eax
-		popl	%edx
-		addl	%edx,%eax
+		pushl	%ebp
+		call	_writeln_string
+		addl	$8,%esp
 		leave
 		ret
 
@@ -40,4 +33,3 @@ _start:
 #bss section
 		.comm	intb0,4,4
 		.comm	intc1,4,4
-		.comm	inta3,4,4
