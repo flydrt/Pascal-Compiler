@@ -1,8 +1,6 @@
 program helloworld;
-var a,b:boolean;
+var a:array[1..10] of integer;
 begin
-	a := false;
-	b := true;
-	writeln(a and b);
-	writeln(b and b);
+	a[1] := 1;
+	writeln(a[1]);
 end.

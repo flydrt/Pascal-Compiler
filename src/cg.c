@@ -76,8 +76,6 @@ void emit_main_begin(){
 	for(;i < MAXLIST; i++){
 		bssList.symList[i] = NULL;
 	}
-	
-
 }
 
 
