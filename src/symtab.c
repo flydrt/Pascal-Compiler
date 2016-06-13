@@ -533,6 +533,10 @@ pSymNode traverseSyntaxTree(pTree root) {
 			traverseSyntaxTree(root->child[2]);
 			break;
 		}
+		case GOTO_STMT: {
+			traverseSyntaxTree(root->child[0]);
+			break;
+		}
 
 		//expression
 		case eGE:
