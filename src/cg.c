@@ -33,17 +33,20 @@ void emit_main_begin();
 void emit_main_end();
 int emit_function_begin(pTree);
 void emit_function_end();
+void CGProcStmtIdArgs(pTree);
 void changeParmName(pTree ,int);
 
 void CGStmtAssign(pTree,int);
 void CGArrayAssign(pTree);
 void CGFuncReturn(pTree);
+
 void CGStmtIf(pTree);
 void CGexpr();
 void CGFactorConst(pTree);
 void CGFactorId(pTree);
 void CGFactorArray(pTree);
 void CGFactorFunc(pTree);
+void CGFactorSysFunc(pTree);
 void CGFor(pTree);
 void CGCompare(pTree);
 void CGRepeat(pTree);
@@ -105,6 +108,18 @@ void CGFuncReturn (pTree node){
 	CODE_OUTPUT("\t\tmovl\t%eax,-4(%ebp)\n");
 }
 
+void CGProcStmtIdArgs(pTree node){
+	int level;
+	pSymNode symnode = searchIDWithinScope(node->child[1]->data.stringVal
+	, currentStack.stack[currentStack.top - 1], &level);
+
+	generateCode(node->child[2],13);
+	CODE_OUTPUT("\t\tpushl\t%eax\n");
+	CODE_OUTPUT("\t\tpushl\t%ebp\n");
+	fprintf(codeFile, "\t\tcall\t%s\n",symnode->rname);
+	CODE_OUTPUT("\t\taddl\t$8,%esp\n");
+}
+
 void changeParmName(pTree node,int argc){
 	
 	int level;
@@ -115,7 +130,7 @@ void changeParmName(pTree node,int argc){
 	//printf("name: %s\n",symnode->rname);
 	symnode->needWrite = 0;
 	if(node->child[0]!=NULL){
-		printf("HAVE CHILD: %s \n",node->child[0]->data.stringVal);
+		//printf("HAVE CHILD: %s \n",node->child[0]->data.stringVal);
 		changeParmName(node->child[0],argc-1);
 	}
 }
@@ -535,6 +550,11 @@ void CGFactorArray(pTree node){
 
 }
 
+void CGFactorSysFunc(pTree node){
+	printf("FUNC: %s\n", node->data.stringVal);
+}
+
+
 void CGFactorFunc(pTree node){
 	//printf("*------*\n");
 	int level;
@@ -816,15 +836,24 @@ void generateCode(pTree node,int space){
 		}
  		case PROCEDURE_DECL:	{
  			printf("PROCEDURE_DECL\n");
+ 			
  			enter_field(node->symtab);
-
+ 			generateCode(node->child[1],space+1);
+			generateCode(node->child[2],space+1);
+			emit_function_end();
 			leave_field();
  			break;
  		}
- 		case PROCEDURE_HEAD: 	printf("PROCEDURE_HEAD\n");break;
+ 		case PROCEDURE_HEAD: 	{
+ 			printf("PROCEDURE_HEAD\n");
+ 			int argc = emit_function_begin(node);
+			changeParmName(node->child[2]->child[1],argc);
+ 			break;
+ 		}
 		case VAR_PARA: 			printf("VAR_PARA\n");break;
  		case VAL_PARA: 			printf("VAL_PARA\n");break;
 		case LABEL_STMT: 		printf("LABEL_STMT\n");break;
+
 		case ASSIGN_STMT_1: 	{
 			printf("ASSIGN_STMT_1\n");
 			
@@ -935,7 +964,13 @@ void generateCode(pTree node,int space){
 				generateCode(node->child[0],space+1);
  			break;
  		}
- 		case FACTOR_SYS_FUNC_ARGS: printf("FACTOR_SYS_FUNC_ARGS\n");break;
+ 		case FACTOR_SYS_FUNC_ARGS: {
+ 			printf("FACTOR_SYS_FUNC_ARGS\n");
+ 			//CGFactorSysFunc(node);
+ 			if(node->child[0]!=NULL)
+				generateCode(node->child[0],space+1);
+ 			break;
+ 		}
  		case FACTOR_CONST: 		{
  			printf("FACTOR_CONST\n");
  			CGFactorConst(node);
@@ -955,7 +990,11 @@ void generateCode(pTree node,int space){
  		case FACTOR_RECORD: 	printf("FACTOR_RECORD\n");break;
 
 		case PROC_STMT_ID: 		printf("PROC_STMT_ID\n");break;
- 		case PROC_STMT_ID_ARGS: printf("PROC_STMT_ID_ARGS\n");break;
+ 		case PROC_STMT_ID_ARGS: {
+ 			printf("PROC_STMT_ID_ARGS\n");
+ 			CGProcStmtIdArgs(node);
+ 			break;
+ 		}
  		case PROC_STMT_SYS_EXPR:{				//writeln, write
  			//printf("PROC_STMT_SYS_EXPR\n");
  			CGOutput(node);

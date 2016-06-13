@@ -1,14 +1,13 @@
 program helloworld;
 var a,b:integer;
-function test(a,b:integer):integer;
-var c:integer;
+procedure test(a,b:integer);
 begin
-	c := 1;
-	a := a + b + c;
-	test := a;
+	a := a + b;
+	writeln(a);
 end;
 begin
 	a := 10;
 	b := 10;
-	writeln(test(a,b));
+	test(a,b);
+	writeln(a);
 end.
