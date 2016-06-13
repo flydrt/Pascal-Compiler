@@ -32,10 +32,12 @@ int dataCnt = 0;
 void emit_main_begin();
 void emit_main_end();
 void CGStmtAssign(pTree,int);
+void CGArrayAssign(pTree);
 void CGStmtIf(pTree);
 void CGexpr();
 void CGFactorConst(pTree);
 void CGFactorId(pTree);
+void CGFactorArray(pTree);
 void CGFor(pTree);
 void CGCompare(pTree);
 void CGRepeat(pTree);
@@ -78,7 +80,17 @@ void emit_main_begin(){
 	}
 }
 
-
+int calSize(pSymNode node){
+	if(node->attr == ATTR_INTEGER)
+		return 4;
+	else if(node->attr == ATTR_BOOL)
+		return 4;
+	else if(node->attr == ATTR_ARRAY){
+		int first = node->link->first->v.i;
+		int last = node->link->last->v.i;
+		return (last - first + 1) * 4;
+	}
+}
 
 void insertBss(pSymNode node){
 	if(node == NULL)
@@ -90,8 +102,11 @@ void insertBss(pSymNode node){
 			break;
 		}
 	}
-	if(!flag)
+	if(!flag){
+		int size = calSize(node);
+		node->size = size;
 		bssList.symList[bssList.size++] = node;
+	}
 	if(bssList.size >= MAXLIST)
 		printf("WARNING: TOO FEWER MAXLIST\n");
 }
@@ -105,6 +120,9 @@ void writeBss(){
 			case ATTR_INTEGER:{
 				fprintf(codeFile,"\t\t.comm\t%s,4,4\n",bssList.symList[i]->rname);
 				break;
+			}
+			case ATTR_ARRAY:{
+				fprintf(codeFile,"\t\t.comm\t%s,%d,4\n",bssList.symList[i]->rname,bssList.symList[i]->size);
 			}
 			case ATTR_REAL:
 			case ATTR_CHAR:
@@ -209,7 +227,7 @@ void CGWhile(pTree node){
 
 void CGFor(pTree node){
 	char for_start[100],for_end[100],jump[100];
-	int i;
+	//int i;
 	sprintf(for_start,"for_start_%s",CGGetLabel());
 	sprintf(jump,"j_%s",CGGetLabel());
 	sprintf(for_end,"for_end_%s",CGGetLabel());
@@ -266,6 +284,29 @@ void CGStmtAssign(pTree node,int space){
 		fprintf(codeFile,"\t\tmovl\t%%eax,%s\n",symnode->rname);
 
 }
+
+void CGArrayAssign(pTree node){
+	generateCode(node->child[1],10);
+	generateCode(node->child[2],10);
+	
+	int level;
+	pSymNode symnode = searchIDWithinScope(node->child[1]->data.stringVal
+		, currentStack.stack[currentStack.top - 1], &level);
+	//insertBss(symnode);
+	fprintf(codeFile, "\t\tsubl\t$%d,%%eax\n", symnode->link->first->v.i);
+	fprintf(codeFile, "\t\tmovl\t$4,%%ecx\n");
+	CODE_OUTPUT("\t\timul\t%ecx\n");
+	CODE_OUTPUT("\t\tpopl\t%edx\n");
+	CODE_OUTPUT("\t\taddl\t%eax,%edx\n");
+	CODE_OUTPUT("\t\tpushl\t%edx\n");
+
+	generateCode(node->child[3],10);
+	CODE_OUTPUT("\t\tpopl\t%ebx\n");
+	CODE_OUTPUT("\t\tmovl\t%eax,(%ebx)\n");
+	
+	//CODE_OUTPUT("#----------------\n");
+}
+
 
 void CGexpr(pTree node){
 	if(node->child[1]!=NULL && node->child[2]!=NULL){
@@ -409,6 +450,31 @@ void CGCompare(pTree node){
 	fprintf(codeFile, "%s:\n", jumpLabel);
 }
 
+void CGFactorArray(pTree node){
+	
+	generateCode(node->child[1],0);
+	generateCode(node->child[2],0);
+	//CODE_OUTPUT("#------");
+
+	int level;
+	pSymNode symnode = searchIDWithinScope(node->child[1]->data.stringVal
+		, currentStack.stack[currentStack.top - 1], &level);
+	
+	fprintf(codeFile, "\t\tsubl\t$%d,%%eax\n", symnode->link->first->v.i);
+	fprintf(codeFile, "\t\tmovl\t$4,%%ecx\n");
+	CODE_OUTPUT("\t\timul\t%ecx\n");
+	CODE_OUTPUT("\t\tpopl\t%edx\n");
+	CODE_OUTPUT("\t\taddl\t%eax,%edx\n");
+	CODE_OUTPUT("\t\tpushl\t%edx\n");
+
+	CODE_OUTPUT("\t\tpopl\t%ebx\n");
+	CODE_OUTPUT("\t\tmovl\t(%ebx),%eax\n");
+	
+
+
+}
+
+
 void CGFactorConst(pTree node){
 	switch(node->child[1]->attr){
 		case ATTR_BOOL:{
@@ -430,6 +496,9 @@ void CGFactorConst(pTree node){
 			printf("string data: %s\n",node->child[1]->data.stringVal);
 			break;
 		}
+		case ATTR_ARRAY:{
+			printf("yes array!\n");
+		}
 		default: printf("WARNING: FACTOR CONST DEFAULT\n");break;
 	}
 }
@@ -445,6 +514,18 @@ void CGHandleVar(pTree node){
 			if(index >= 0)
 				fprintf(codeFile, "\t\tmovl\t%s,%%eax\n", dataList[index].rname);
 			printf("string data: %s\n",node->data.stringVal);
+			break;
+		}
+		case tID:{
+			int level;
+			pSymNode symnode = searchIDWithinScope(node->data.stringVal
+			, currentStack.stack[currentStack.top - 1], &level);
+			insertBss(symnode);
+			if(symnode->attr == ATTR_ARRAY){
+				CGloadAddress(symnode);
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
+
+			}
 			break;
 		}
 		default:printf("WARNING: HANDLE VAR DEFAULT\n");break;
@@ -652,7 +733,13 @@ void generateCode(pTree node,int space){
 				generateCode(node->child[0],space+1);
 			break;
 		}
- 		case ASSIGN_STMT_2: 	printf("ASSIGN_STMT_2\n");break;
+ 		case ASSIGN_STMT_2: 	{
+ 			printf("ASSIGN_STMT_2\n");
+ 			CGArrayAssign(node);
+ 			if(node->child[0]!=NULL)
+				generateCode(node->child[0],space+1);
+ 			break;
+ 		}
  		case ASSIGN_STMT_3: 	printf("ASSIGN_STMT_3\n");break;
 		case IF_STMT: 			{
 			//printf("IF_STMT\n");
@@ -749,7 +836,11 @@ void generateCode(pTree node,int space){
  		}
  		case FACTOR_NOT: 		printf("FACTOR_NOT\n");break;
  		case FACTOR_MINUS: 		printf("FACTOR_MINUS\n");break;
- 		case FACTOR_ARRAY: 		printf("FACTOR_ARRAY\n");break;
+ 		case FACTOR_ARRAY: 		{
+ 			printf("FACTOR_ARRAY\n");
+ 			CGFactorArray(node);
+ 			break;
+ 		}
  		case FACTOR_RECORD: 	printf("FACTOR_RECORD\n");break;
 
 		case PROC_STMT_ID: 		printf("PROC_STMT_ID\n");break;
@@ -778,13 +869,13 @@ void generateCode(pTree node,int space){
  		case tSIMPLE_SUBRANGE:  printf("tSIMPLE_SUBRANGE\n");break;
  		case tSIMPLE_SUBRANGE_ID:printf("tSIMPLE_SUBRANGE_ID\n");break;
 		
-		case tINTEGER: 			
+		case tINTEGER: 		
  		case tREAL: 			
  		case tCHAR: 			
- 		case tSTRING:		 
+ 		case tSTRING:
  		case tID:	{
  			CGHandleVar(node);
- 			printf("HANDLE VAR\n");
+ 			//printf("HANDLE VAR\n");
  			break;
  		}
 		default:printf("others\n");break;
