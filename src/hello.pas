@@ -1,6 +1,5 @@
 program helloworld;
-var a:array[6..10] of integer;
+var a:array['a'..'c'] of integer;
 begin
-	a[7] := 3;
-	writeln(a[7]);
+	writeln('a');
 end.

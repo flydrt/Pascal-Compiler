@@ -293,7 +293,12 @@ void CGArrayAssign(pTree node){
 	pSymNode symnode = searchIDWithinScope(node->child[1]->data.stringVal
 		, currentStack.stack[currentStack.top - 1], &level);
 	//insertBss(symnode);
-	fprintf(codeFile, "\t\tsubl\t$%d,%%eax\n", symnode->link->first->v.i);
+	if(symnode->link->first->attr == ATTR_INTEGER)
+		fprintf(codeFile, "\t\tsubl\t$%d,%%eax\n", symnode->link->first->v.i);
+	else if(symnode->link->first->attr == ATTR_CHAR){
+		//if(symnode->link->first->v.c)
+		fprintf(codeFile, "\t\tsubl\t$%d,%%eax\n", symnode->link->first->v.i);
+	}
 	fprintf(codeFile, "\t\tmovl\t$4,%%ecx\n");
 	CODE_OUTPUT("\t\timul\t%ecx\n");
 	CODE_OUTPUT("\t\tpopl\t%edx\n");
@@ -487,8 +492,11 @@ void CGFactorConst(pTree node){
 			fprintf(codeFile,"\t\tmovl\t$%d,%%eax\n",node->child[1]->data.intVal);
 			break;
 		}
-		case ATTR_REAL:
-		case ATTR_CHAR:break;
+		case ATTR_REAL:break;
+		case ATTR_CHAR:{
+			fprintf(codeFile,"\t\tmovl\t$%d,%%eax\n",node->child[1]->data.intVal);
+			break;
+		}
 		case ATTR_STRING:{
 			int index = insertDataSection(node->child[1]->data.stringVal);
 			if(index >= 0)
