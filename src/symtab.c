@@ -960,6 +960,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 			while (root) {
 				pSymNode p = newEmptySymbol();
 				p->type = TYPE_ENUM;
+				p->attr = ATTR_ENUM;
 				strcpy(p->name, (root->data).stringVal);
 				// can assign p->v
 				if (insertSymNode(p)) {
