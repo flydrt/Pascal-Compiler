@@ -123,7 +123,7 @@ void CGProcStmtIdArgs(pTree node){
 
 void CGLabelStmt(pTree node){
 
-	fprintf(codeFile, "%d:\n", node->child[1]->data.intVal);
+	fprintf(codeFile, "goto_%d:\n", node->child[1]->data.intVal);
 	generateCode(node->child[2],0);
 	if(node->child[0]!=NULL)
 		generateCode(node->child[0],0);
@@ -131,7 +131,7 @@ void CGLabelStmt(pTree node){
 
 void CGGotoStmt(pTree node){
 	//printf("%d\n", node->child[1]->data.intVal);
-	fprintf(codeFile, "\t\tjmp\t%d\n", node->child[1]->data.intVal);
+	fprintf(codeFile, "\t\tjmp\tgoto_%d\n", node->child[1]->data.intVal);
 }
 
 void changeParmName(pTree node,int argc){
@@ -921,6 +921,8 @@ void generateCode(pTree node,int space){
 		case CASE_STMT: 		{
 			printf("CASE_STMT\n");
 			CGCaseStmt(node);
+			if(node->child[0]!=NULL)
+				generateCode(node->child[0],space+1);
 			break;
 		}
  		case CASE_EXPR_CONST:	{

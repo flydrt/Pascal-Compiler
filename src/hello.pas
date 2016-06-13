@@ -1,11 +1,12 @@
 program helloworld;
-var a,b:integer;
+var b,c:integer;
 begin
-	b := 0;
-	goto 10;
-	b := 10;
-	a := 10;
-10:
-	writeln(b);
+	read(b);	
+	case b of
+		1:c := 1;
+		2:c := 2;
+		3:c := 3;
+	end;
+	writeln(c);
 end.
 
