@@ -31,13 +31,19 @@ int dataCnt = 0;
 
 void emit_main_begin();
 void emit_main_end();
+int emit_function_begin(pTree);
+void emit_function_end();
+void changeParmName(pTree ,int);
+
 void CGStmtAssign(pTree,int);
 void CGArrayAssign(pTree);
+void CGFuncReturn(pTree);
 void CGStmtIf(pTree);
 void CGexpr();
 void CGFactorConst(pTree);
 void CGFactorId(pTree);
 void CGFactorArray(pTree);
+void CGFactorFunc(pTree);
 void CGFor(pTree);
 void CGCompare(pTree);
 void CGRepeat(pTree);
@@ -72,12 +78,51 @@ void emit_main_begin(){
 	CODE_OUTPUT("\t\tpushl\t%ebp\n");
 	CODE_OUTPUT("\t\tmovl\t%esp,%ebp\n");
 
-	bssList.size = 0;
+	//bssList.size = 0;
 	memset(dataList,0,sizeof(datalink)*MAXLIST);
-	int i = 0;
-	for(;i < MAXLIST; i++){
-		bssList.symList[i] = NULL;
+	
+}
+
+int emit_function_begin(pTree node){
+	int level;
+	pSymNode symnode = searchIDWithinScope(node->child[1]->data.stringVal
+		, currentStack.stack[currentStack.top - 1], &level);
+	
+	fprintf(codeFile, "# %s function\n", symnode->rname);
+	CODE_OUTPUT(".text\n");
+	fprintf(codeFile, ".global %s\n", symnode->rname);
+	fprintf(codeFile, "\t\t.type\t%s,@function\n",symnode->rname);
+	fprintf(codeFile, "%s:\n", symnode->rname);
+	CODE_OUTPUT("\t\tpushl\t%ebp\n");
+	CODE_OUTPUT("\t\tmovl\t%esp,%ebp\n");
+	CODE_OUTPUT("\t\tsubl\t$8,%esp\n");
+	symnode->needWrite = 0;
+	symnode->isReturn = 1;
+	return symnode->argc;
+}
+
+void CGFuncReturn (pTree node){
+	CODE_OUTPUT("\t\tmovl\t%eax,-4(%ebp)\n");
+}
+
+void changeParmName(pTree node,int argc){
+	
+	int level;
+	pSymNode symnode = searchIDWithinScope(node->data.stringVal
+		, currentStack.stack[currentStack.top - 1], &level);
+	//printf("name: %s\n",symnode->rname);
+	sprintf(symnode->rname,"%d(%%ebp)",argc * 4 + 8);
+	//printf("name: %s\n",symnode->rname);
+	symnode->needWrite = 0;
+	if(node->child[0]!=NULL){
+		printf("HAVE CHILD: %s \n",node->child[0]->data.stringVal);
+		changeParmName(node->child[0],argc-1);
 	}
+}
+
+void emit_function_end(){
+	CODE_OUTPUT("\t\tleave\n");
+	CODE_OUTPUT("\t\tret\n");
 }
 
 int calSize(pSymNode node){
@@ -97,24 +142,36 @@ void insertBss(pSymNode node){
 		return;
 	int i = 0,flag = 0;
 	for(;i < MAXLIST; i++){
-		if(bssList.symList[i] == node){
+		if( bssList.symList[i] != NULL && strcmp(bssList.symList[i]->rname,node->rname) == 0){
+			//printf("%d: %s === %s\n",i,bssList.symList[i]->rname,node->rname );
 			flag = 1;
 			break;
 		}
 	}
 	if(!flag){
+
 		int size = calSize(node);
 		node->size = size;
-		bssList.symList[bssList.size++] = node;
-	}
+		pSymNode tmp = (pSymNode)malloc(sizeof(struct symNode));
+		strcpy(tmp->rname,node->rname);
+		tmp->size = size;
+		tmp->attr = node->attr;
+		tmp->needWrite = node->needWrite;
+		bssList.symList[bssList.size] = tmp;
+		bssList.size++;
+		
+	} 
 	if(bssList.size >= MAXLIST)
 		printf("WARNING: TOO FEWER MAXLIST\n");
 }
 
 void writeBss(){
 	int i = 0;
+	
 	CODE_OUTPUT("#bss section\n");
 	for(; i < bssList.size; i++){
+		if(!bssList.symList[i]->needWrite)
+			continue;
 		switch(bssList.symList[i]->attr){
 			case ATTR_BOOL:
 			case ATTR_INTEGER:{
@@ -127,7 +184,7 @@ void writeBss(){
 			case ATTR_REAL:
 			case ATTR_CHAR:
 			case ATTR_STRING:break;
-			default:break;
+			default:printf("WRITE BSS DEFAULT\n"); break;
 		}
 	}
 }
@@ -271,11 +328,12 @@ void CGFor(pTree node){
 
 void CGStmtAssign(pTree node,int space){
 	int level;
-	
-	//get the symbol table
 	pSymNode symnode = searchIDWithinScope(node->child[1]->data.stringVal
 		, currentStack.stack[currentStack.top - 1], &level);
-
+	if(symnode->isReturn){
+		CGFuncReturn(node);
+		return;
+	}
 	insertBss(symnode);
 	//store the value in %edx
 	generateCode(node->child[2],space+1);		 
@@ -474,11 +532,26 @@ void CGFactorArray(pTree node){
 
 	CODE_OUTPUT("\t\tpopl\t%ebx\n");
 	CODE_OUTPUT("\t\tmovl\t(%ebx),%eax\n");
-	
-
 
 }
 
+void CGFactorFunc(pTree node){
+	//printf("*------*\n");
+	int level;
+	
+	pSymNode symnode = searchIDWithinScope(node->child[1]->data.stringVal
+	, currentStack.stack[currentStack.top - 1], &level);
+
+	generateCode(node->child[2],13);
+	CODE_OUTPUT("\t\tpushl\t%eax\n");
+	CODE_OUTPUT("\t\tpushl\t%ebp\n");
+	fprintf(codeFile, "\t\tcall\t%s\n",symnode->rname);
+	CODE_OUTPUT("\t\taddl\t$8,%esp\n");
+//	printf("%s\n", symnode->rname);
+
+
+	//printf("*------*\n");
+}
 
 void CGFactorConst(pTree node){
 	switch(node->child[1]->attr){
@@ -684,29 +757,40 @@ void generateCode(pTree node,int space){
 		printf("-");
 	switch(node->type){
 		case tPROGRAM:			{
-			emit_main_begin();
-
+			
+			
 			enter_field(node->symtab);
-
 			generateCode(node->child[2],space+1);		//routine
 			
-			emit_main_end();
 			leave_field();
+			
 			break;
 		}
 		case tROUTINE:			{
 
-			printf("tROUTINE\n");
-			//generateCode(node->child[1],space+1);
+			 printf("tROUTINE\n");
+			
+			generateCode(node->child[1],space+1);
+			// CODE_OUTPUT("#------------\n");
+			emit_main_begin();
 			generateCode(node->child[2],space+1);
+			emit_main_end();
+			// CODE_OUTPUT("#------------\n");
 			break;
 		}
 		case tROUTINE_HEAD: 	{
 			printf("tROUTINE_HEAD\n");
+
+			generateCode(node->child[4],space+1);
+
 			break;
 		}
 		
-		case tSUB_ROUTINE : 	printf("tSUB_ROUTINE:\n");break;
+		case tSUB_ROUTINE : 	{
+			printf("tSUB_ROUTINE:\n");
+			generateCode(node->child[2],23);
+			break;
+		}
 		
 		case CONST_DECL: 		printf("CONST_DECL\n");break;
 		case TYPE_DECL : 		printf("TYPE_DECL\n");break;
@@ -717,10 +801,19 @@ void generateCode(pTree node,int space){
 			printf("FUNCTION_DECL\n"); 
 			enter_field(node->symtab);
 
+			generateCode(node->child[1],space+1);
+			generateCode(node->child[2],space+1);
+			emit_function_end();
 			leave_field();
 			break;
 		}
-		case FUNCTION_HEAD: 	printf("FUNCTION_HEAD\n");break;
+		case FUNCTION_HEAD: 	{
+			printf("FUNCTION_HEAD\n");
+			int argc = emit_function_begin(node);
+			changeParmName(node->child[2]->child[1],argc);
+
+			break;
+		}
  		case PROCEDURE_DECL:	{
  			printf("PROCEDURE_DECL\n");
  			enter_field(node->symtab);
@@ -829,17 +922,27 @@ void generateCode(pTree node,int space){
 		case FACTOR_ID: 		{
 			printf("FACTOR_ID %s\n",node->data.stringVal);
 			CGFactorId(node);
-			if(node->child[0]!=NULL)
+			if(node->child[0]!=NULL){
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
 				generateCode(node->child[0],space+1);
+			}
 			break;
 		}
- 		case FACTOR_FUNC: 		printf("FACTOR_FUNC\n");break;
+ 		case FACTOR_FUNC: 		{
+ 			printf("FACTOR_FUNC\n");
+ 			CGFactorFunc(node);
+ 			if(node->child[0]!=NULL)
+				generateCode(node->child[0],space+1);
+ 			break;
+ 		}
  		case FACTOR_SYS_FUNC_ARGS: printf("FACTOR_SYS_FUNC_ARGS\n");break;
  		case FACTOR_CONST: 		{
  			printf("FACTOR_CONST\n");
  			CGFactorConst(node);
- 			if(node->child[0]!=NULL)
+ 			if(node->child[0]!=NULL){
+ 				CODE_OUTPUT("\t\tpushl\t%eax\n");
 				generateCode(node->child[0],space+1);
+ 			}
  			break;
  		}
  		case FACTOR_NOT: 		printf("FACTOR_NOT\n");break;
@@ -854,7 +957,7 @@ void generateCode(pTree node,int space){
 		case PROC_STMT_ID: 		printf("PROC_STMT_ID\n");break;
  		case PROC_STMT_ID_ARGS: printf("PROC_STMT_ID_ARGS\n");break;
  		case PROC_STMT_SYS_EXPR:{				//writeln, write
- 			printf("PROC_STMT_SYS_EXPR\n");
+ 			//printf("PROC_STMT_SYS_EXPR\n");
  			CGOutput(node);
  			if(node->child[0] != NULL)
  				generateCode(node->child[0],space+1);
@@ -894,8 +997,13 @@ void generateCode(pTree node,int space){
 }
 
 void init_stack(){
-	currentStack.top = 0;
+	bssList.size = 0;
 	int i = 0;
+	for(;i < MAXLIST; i++){
+		bssList.symList[i] = NULL;
+	}
+	currentStack.top = 0;
+	
 	for(;i < MAXFIELD; i++)
 		currentStack.stack[i] = NULL;
 }

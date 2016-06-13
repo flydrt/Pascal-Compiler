@@ -46,6 +46,8 @@ typedef struct symNode {
     pTypeAttr link;
     int argc;
     int size;
+    int needWrite;
+    int isReturn;
     struct symNode * next_link;
     struct symNode * next;       // for hash conflict
 } SymNode, *pSymNode;

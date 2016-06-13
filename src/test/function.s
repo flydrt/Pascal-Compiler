@@ -7,14 +7,14 @@ exit_syscall = 0x1
 #---program helloworld ---
 
 # routine : test 
-.text
+		.text
 .globl rtn001
 		.type rtn001, @function
 rtn001:
 		pushl	%ebp
 		movl	%esp, %ebp
 		subl	$8, %esp
-		subl	$0, %esp
+		subl	$4, %esp
 		movl	12(%ebp), %eax
 		pushl	%eax
 		movl	$1, %eax
@@ -44,11 +44,15 @@ _main:
 		movl	%esp, %ebp
 		movl	$10, %eax
 		movl	%eax, va_001
+		movl	$3, %eax
+		movl	%eax, vb_002
 		movl	va_001, %eax
+		pushl	%eax
+		movl	vb_002, %eax
 		pushl	%eax
 		pushl	%ebp
 		call	rtn001
-		addl	$8, %esp
+		addl	$12, %esp
 		pushl	%eax
 		pushl	%ebp
 		call	_writeln_int
@@ -66,4 +70,5 @@ _start:
 .ident	"SPL: 0.1.5"
 
 #.bss variables
+		.comm vb_002,4,4
 		.comm va_001,4,4
