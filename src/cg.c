@@ -35,8 +35,9 @@ int emit_function_begin(pTree);
 void emit_function_end();
 void CGProcStmtIdArgs(pTree);
 void changeParmName(pTree ,int);
-
+void CGGotoStmt(pTree);
 void CGStmtAssign(pTree,int);
+void CGLabelStmt(pTree);
 void CGArrayAssign(pTree);
 void CGFuncReturn(pTree);
 
@@ -118,6 +119,19 @@ void CGProcStmtIdArgs(pTree node){
 	CODE_OUTPUT("\t\tpushl\t%ebp\n");
 	fprintf(codeFile, "\t\tcall\t%s\n",symnode->rname);
 	CODE_OUTPUT("\t\taddl\t$8,%esp\n");
+}
+
+void CGLabelStmt(pTree node){
+
+	fprintf(codeFile, "%d:\n", node->child[1]->data.intVal);
+	generateCode(node->child[2],0);
+	if(node->child[0]!=NULL)
+		generateCode(node->child[0],0);
+}
+
+void CGGotoStmt(pTree node){
+	//printf("%d\n", node->child[1]->data.intVal);
+	fprintf(codeFile, "\t\tjmp\t%d\n", node->child[1]->data.intVal);
 }
 
 void changeParmName(pTree node,int argc){
@@ -599,8 +613,13 @@ void CGFactorConst(pTree node){
 		}
 		case ATTR_ARRAY:{
 			printf("yes array!\n");
+			break;
+		} 
+		case ATTR_NONE:{
+			printf("FACTOR_ATTR_NONE\n");
+			break;
 		}
-		default: printf("WARNING: FACTOR CONST DEFAULT\n");break;
+		default: printf("WARNING: FACTOR CONST DEFAULT; \n");break;
 	}
 }
 
@@ -777,32 +796,23 @@ void generateCode(pTree node,int space){
 		printf("-");
 	switch(node->type){
 		case tPROGRAM:			{
-			
-			
 			enter_field(node->symtab);
 			generateCode(node->child[2],space+1);		//routine
-			
 			leave_field();
-			
 			break;
 		}
 		case tROUTINE:			{
-
-			 printf("tROUTINE\n");
-			
+			//printf("tROUTINE\n");
 			generateCode(node->child[1],space+1);
-			// CODE_OUTPUT("#------------\n");
 			emit_main_begin();
 			generateCode(node->child[2],space+1);
 			emit_main_end();
-			// CODE_OUTPUT("#------------\n");
 			break;
 		}
 		case tROUTINE_HEAD: 	{
 			printf("tROUTINE_HEAD\n");
-
-			generateCode(node->child[4],space+1);
-
+			if(node->child[4]!=NULL)
+				generateCode(node->child[4],space+1);
 			break;
 		}
 		
@@ -852,13 +862,15 @@ void generateCode(pTree node,int space){
  		}
 		case VAR_PARA: 			printf("VAR_PARA\n");break;
  		case VAL_PARA: 			printf("VAL_PARA\n");break;
-		case LABEL_STMT: 		printf("LABEL_STMT\n");break;
+		case LABEL_STMT: 		{
+			printf("LABEL_STMT\n");
+			CGLabelStmt(node);
+			break;
+		}
 
 		case ASSIGN_STMT_1: 	{
 			printf("ASSIGN_STMT_1\n");
-			
 			CGStmtAssign(node,space);
-
 			if(node->child[0]!=NULL)
 				generateCode(node->child[0],space+1);
 			break;
@@ -919,7 +931,13 @@ void generateCode(pTree node,int space){
  			break;
  		}
  		case CASE_EXPR_ID: 		printf("CASE_EXPR_ID\n");break;
- 		case GOTO_STMT: 		printf("GOTO_STMT\n");break;
+ 		case GOTO_STMT: 		{
+ 			printf("GOTO_STMT\n");
+ 			CGGotoStmt(node);
+ 			if(node->child[0]!=NULL)
+				generateCode(node->child[0],space+1);
+ 			break;
+ 		}
 
  		//compare
 		case eGE:				

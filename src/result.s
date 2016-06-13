@@ -4,27 +4,6 @@ exit_syscall = 0x1
 .data
 
 
-# test10 function
-.text
-.global test10
-		.type	test10,@function
-test10:
-		pushl	%ebp
-		movl	%esp,%ebp
-		subl	$8,%esp
-		movl	16(%ebp),%eax
-		pushl	%eax
-		movl	12(%ebp),%eax
-		popl	%edx
-		addl	%edx,%eax
-		movl	%eax,16(%ebp)
-		movl	16(%ebp),%eax
-		pushl	%eax
-		pushl	%ebp
-		call	_writeln_int
-		addl	$8,%esp
-		leave
-		ret
 # main routine
 .text
 .global _main
@@ -32,16 +11,16 @@ test10:
 _main:
 		pushl	%ebp
 		movl	%esp,%ebp
-		movl	$10,%eax
-		movl	%eax,a7
-		movl	$10,%eax
-		movl	%eax,b8
-		movl	a7,%eax
-		pushl	%eax
-		movl	b8,%eax
+		movl	$0,%eax
+		movl	%eax,b1
+		jmp	10
+		movl	%eax,b1
+		movl	%eax,a0
+10:
+		movl	b1,%eax
 		pushl	%eax
 		pushl	%ebp
-		call	test10
+		call	_writeln_int
 		addl	$8,%esp
 		leave
 		ret
@@ -54,5 +33,5 @@ _start:
 		int $sys_call_id
 
 #bss section
-		.comm	a7,4,4
-		.comm	b8,4,4
+		.comm	b1,4,4
+		.comm	a0,4,4
