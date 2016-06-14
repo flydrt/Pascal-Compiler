@@ -467,7 +467,8 @@ pSymNode traverseSyntaxTree(pTree root) {
 		}
 		case CASE_STMT: {
 			traverseSyntaxTree(root->child[1]);
-			if (root->child[1]->attr != ATTR_INTEGER && root->child[1]->attr != ATTR_CHAR) {
+			if (root->child[1]->attr != ATTR_INTEGER && root->child[1]->attr != ATTR_CHAR &&
+					root->child[1]->attr != ATTR_ENUM) {
 				//To do
 				parseError(CASE_STMT_ERROR, root->child[1]->lineno, NULL);
 
