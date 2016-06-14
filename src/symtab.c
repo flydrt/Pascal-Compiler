@@ -518,7 +518,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 					parseError(NOT_CONST, root->child[1]->lineno, root->child[1]->data.stringVal);
 				}
 				else {
-					if (p->attr == ATTR_INTEGER || p->attr == ATTR_CHAR) {
+					if (p->attr == ATTR_INTEGER || p->attr == ATTR_CHAR || p->attr == ATTR_ENUM) {
 						root->attr = p->attr;
 					}
 					else {
@@ -734,6 +734,31 @@ pSymNode traverseSyntaxTree(pTree root) {
 		case FACTOR_SYS_FUNC_ARGS: {
 			//To do
 			traverseSyntaxTree(root->child[2]);
+
+			if(!strcmp(root->child[1]->data.stringVal, "abs")) {
+				root->attr = root->child[2]->attr;
+			}
+			else if(!strcmp(root->child[1]->data.stringVal, "chr")) {
+				root->attr = ATTR_CHAR;
+			}
+			else if(!strcmp(root->child[1]->data.stringVal, "odd")) {
+				root->attr = ATTR_BOOL;
+			}
+			else if(!strcmp(root->child[1]->data.stringVal, "ord")) {
+				root->attr = ATTR_INTEGER;
+			}
+			else if(!strcmp(root->child[1]->data.stringVal, "pred")) {
+				root->attr = root->child[2]->attr;
+			}
+			else if(!strcmp(root->child[1]->data.stringVal, "sqr")) {
+				root->attr = root->child[2]->attr;
+			}
+			else if(!strcmp(root->child[1]->data.stringVal, "sqrt")) {
+				root->attr = ATTR_REAL;
+			}
+			else if(!strcmp(root->child[1]->data.stringVal, "succ")) {
+				root->attr = root->child[2]->attr;
+			}
 			break;
 		}
 		case FACTOR_CONST: {
