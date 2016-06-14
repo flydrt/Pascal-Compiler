@@ -1,12 +1,8 @@
 program helloworld;
-var b,c:integer;
+var a,b:integer;c:char;
 begin
 	read(b);	
-	case b of
-		1:c := 1;
-		2:c := 2;
-		3:c := 3;
-	end;
+	c:=chr(b);
 	writeln(c);
 end.
 
