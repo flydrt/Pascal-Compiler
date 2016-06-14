@@ -60,6 +60,8 @@ void CGVarDecl(pTree);
 
 void CGSysAbs(pTree);
 void CGSysChr(pTree);
+void CGSysPred(pTree);
+void CGSysSucc(pTree);
 
 void CGOutput(pTree);
 void CGInput(pTree);
@@ -219,8 +221,8 @@ void writeBss(){
 			case ATTR_ARRAY:{
 				fprintf(codeFile,"\t\t.comm\t%s,%d,4\n",bssList.symList[i]->rname,bssList.symList[i]->size);
 			}
-			case ATTR_REAL:
-			case ATTR_CHAR:
+			case ATTR_REAL:break;
+			case ATTR_CHAR:fprintf(codeFile,"\t\t.comm\t%s,4,4\n",bssList.symList[i]->rname);
 			case ATTR_STRING:break;
 			default:printf("WRITE BSS DEFAULT\n"); break;
 		}
@@ -376,7 +378,7 @@ void CGStmtAssign(pTree node,int space){
 	//store the value in %edx
 	generateCode(node->child[2],space+1);		 
 	
-	if(symnode->attr == ATTR_INTEGER || symnode->attr == ATTR_BOOL)
+	if(symnode->attr == ATTR_INTEGER || symnode->attr == ATTR_BOOL || symnode->attr == ATTR_CHAR)
 		fprintf(codeFile,"\t\tmovl\t%%eax,%s\n",symnode->rname);
 
 }
@@ -597,6 +599,14 @@ void CGSysChr(pTree node){
 	//CODE_OUTPUT("\t\tpushl\t%eax\n");
 }
 
+void CGSysPred(pTree node){
+	CODE_OUTPUT("\t\tsubl\t$1,%eax\n");
+}
+
+void CGSysSucc(pTree node){
+	CODE_OUTPUT("\t\taddl\t$1,%eax\n");
+}
+
 void CGFactorSysFunc(pTree node){
 	//CODE_OUTPUT("#----------\n");
 	generateCode(node->child[2],10);
@@ -607,7 +617,12 @@ void CGFactorSysFunc(pTree node){
 		CGSysChr(node);
 	} else if(strcmp(node->child[1]->data.stringVal,"odd")==0){
 
+	} else if(strcmp(node->child[1]->data.stringVal,"pred")==0){
+		CGSysPred(node);
+	} else if(strcmp(node->child[1]->data.stringVal,"succ")==0){
+		CGSysSucc(node);
 	}
+
 	printf("FUNC: %s\n", node->child[1]->data.stringVal);
 	switch(node->attr){
 		case ATTR_INTEGER:printf("attr - integer\n");break;

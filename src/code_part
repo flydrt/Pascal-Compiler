@@ -5,12 +5,13 @@
 _main:
 		pushl	%ebp
 		movl	%esp,%ebp
-		leal	b1,%eax
+		leal	d3,%eax
 		pushl	%eax
 		pushl	%ebp
-		call	_read_int
+		call	_read_char
 		addl	$8,%esp
-		movl	b1,%eax
+		subl	$1,%eax
+		movl	%eax,c2
 		pushl	%eax
 		pushl	%ebp
 		call	_writeln_char
@@ -26,4 +27,5 @@ _start:
 		int $sys_call_id
 
 #bss section
-		.comm	b1,4,4
+		.comm	c2,4,4
+		.comm	d3,4,4

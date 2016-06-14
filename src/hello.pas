@@ -1,8 +1,8 @@
 program helloworld;
-var a,b:integer;c:char;
+var a,b:integer;c,d:char;
 begin
-	read(b);	
-	c:=chr(b);
+	read(d);	
+	c:=pred(d);
 	writeln(c);
 end.
 
