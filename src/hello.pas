@@ -1,8 +1,8 @@
 program helloworld;
 var a,b:integer;c,d:char;
 begin
-	read(d);	
-	c:=pred(d);
-	writeln(c);
+	read(a);
+	if a > 65 then writeln('yes');
+	writeln(a);
 end.
 

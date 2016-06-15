@@ -62,6 +62,7 @@ void CGSysAbs(pTree);
 void CGSysChr(pTree);
 void CGSysPred(pTree);
 void CGSysSucc(pTree);
+void CGSysSqr(pTree);
 
 void CGOutput(pTree);
 void CGInput(pTree);
@@ -243,6 +244,7 @@ int insertDataSection(char* str){
 }
 
 void writeData(){
+
 	int i = 0;
 	for(;i < dataCnt; i++){
 		fprintf(dataFile, ".globl %s\n", dataList[i].rname);
@@ -279,6 +281,7 @@ void emit_main_end(){
 void CGStmtIf(pTree node){
 	char else_label[100],exit_label[100];
 	
+	
 	sprintf(else_label,"if_else_%s",CGGetLabel());
 	sprintf(exit_label,"if_exit_%s",CGGetLabel());
 
@@ -290,7 +293,9 @@ void CGStmtIf(pTree node){
 	generateCode(node->child[2],5);
 	fprintf(codeFile, "\t\tjmp\t%s\n",exit_label);
 	fprintf(codeFile, "%s:\n",else_label);
-	generateCode(node->child[3],5);
+	if(node->child[3]!=NULL){
+		generateCode(node->child[3],5);
+	}
 
 	fprintf(codeFile, "%s:\n",exit_label);
 }
@@ -520,6 +525,7 @@ void CGCompare(pTree node){
 			printf("node default\n");
 		}
 	}
+
 	CODE_OUTPUT("\t\tmovl\t$1,%eax\n");
 	char jumpLabel[100];
 	sprintf(jumpLabel,"j_%s",CGGetLabel());
@@ -550,7 +556,7 @@ void CGCompare(pTree node){
  		}	
 	}
 	CODE_OUTPUT("\t\txorl\t%eax,%eax\n");
-	fprintf(codeFile, "%s:\n", jumpLabel);
+	fprintf(codeFile,"%s:\n",jumpLabel);
 }
 
 void CGFactorArray(pTree node){
@@ -607,6 +613,12 @@ void CGSysSucc(pTree node){
 	CODE_OUTPUT("\t\taddl\t$1,%eax\n");
 }
 
+void CGSysSqr(pTree node){
+	CODE_OUTPUT("\t\tpushl\t%eax\n");
+	CODE_OUTPUT("\t\tpopl\t%edx\n");
+	CODE_OUTPUT("\t\timul\t%edx,%eax\n");
+}
+
 void CGFactorSysFunc(pTree node){
 	//CODE_OUTPUT("#----------\n");
 	generateCode(node->child[2],10);
@@ -621,6 +633,10 @@ void CGFactorSysFunc(pTree node){
 		CGSysPred(node);
 	} else if(strcmp(node->child[1]->data.stringVal,"succ")==0){
 		CGSysSucc(node);
+	} else if(strcmp(node->child[1]->data.stringVal,"sqr")==0){
+		CGSysSqr(node);
+	} else if(strcmp(node->child[1]->data.stringVal,"ord")==0){
+
 	}
 
 	printf("FUNC: %s\n", node->child[1]->data.stringVal);
@@ -677,7 +693,7 @@ void CGFactorConst(pTree node){
 			int index = insertDataSection(node->child[1]->data.stringVal);
 			if(index >= 0)
 				fprintf(codeFile, "\t\tmovl\t%s,%%eax\n", dataList[index].rname);
-			printf("string data: %s\n",node->child[1]->data.stringVal);
+			printf("string data.: %s\n",node->child[1]->data.stringVal);
 			break;
 		}
 		case ATTR_ARRAY:{
@@ -977,8 +993,10 @@ void generateCode(pTree node,int space){
 		case IF_STMT: 			{
 			//printf("IF_STMT\n");
 			CGStmtIf(node);
-			if(node->child[0]!=NULL)
+			if(node->child[0]!=NULL){
 				generateCode(node->child[0],space+1);
+			}
+
 			break;
 		}
  		case REPEAT_STMT: 		{
