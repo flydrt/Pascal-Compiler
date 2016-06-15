@@ -1,8 +1,11 @@
 program helloworld;
-var a,b:integer;c,d:char;
+		var a:record
+				year:integer;
+				month:integer;
+				day:integer;
+		end;
 begin
-	read(c);
-	if c > 'A' then writeln('yes');
-	writeln(c);
+		a.day := 2015;
+		writeln(a.day);
 end.
 
