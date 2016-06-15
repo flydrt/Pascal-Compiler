@@ -37,24 +37,39 @@ void CGProcStmtIdArgs(pTree);
 void changeParmName(pTree ,int);
 void CGGotoStmt(pTree);
 void CGStmtAssign(pTree,int);
-void CGLabelStmt(pTree);
+void CGStmtIf(pTree);
+void CGRecordAssign(pTree);
 void CGArrayAssign(pTree);
 void CGFuncReturn(pTree);
+void CGLabelStmt(pTree);
 
-void CGStmtIf(pTree);
 void CGexpr();
 void CGFactorConst(pTree);
 void CGFactorId(pTree);
 void CGFactorArray(pTree);
 void CGFactorFunc(pTree);
 void CGFactorSysFunc(pTree);
+void CGFactorRecord(pTree);
+
 void CGFor(pTree);
 void CGCompare(pTree);
 void CGRepeat(pTree);
 void CGWhile(pTree);
 void CGCaseStmt(pTree);
-void CGCaseExpr(pTree);
+void CGCaseExprConst(pTree);
+void CGCaseExprId(pTree);
 void CGHandleVar(pTree);
+void CGHandlEnum(pSymNode);
+int CGGetEnumValue(pSymNode);
+
+void CGVarDecl(pTree);
+void CGFieldDecl(pTree);
+
+void CGSysAbs(pTree);
+void CGSysChr(pTree);
+void CGSysPred(pTree);
+void CGSysSucc(pTree);
+void CGSysSqr(pTree);
 
 void CGOutput(pTree);
 void CGInput(pTree);
@@ -72,6 +87,29 @@ void init_stack();
 void enter_field(pTabNode);
 void leave_field();
 
+
+void CGVarDecl(pTree node){
+	printf("VAR DECL: %s\n", node->child[1]->data.stringVal);
+	// int level;
+	// pSymNode symnode = searchIDWithinScope(node->child[1]->data.stringVal
+	// 	, currentStack.stack[currentStack.top - 1], &level);
+	// if(symnode->attr == ATTR_RECORD){
+	// 	if(symnode->link != NULL)
+	// 	{
+	// 		pSymNode first = symnode->link->first;
+	// 		while(first->next_link != NULL){
+	// 			printf("first: %s\n",first->name);
+	// 			first = first->next_link;
+	// 		}
+	// 		printf("first: %s\n", first->name);
+	// 	}
+	// }
+}
+
+void CGFieldDecl(pTree node){
+	printf("field name: %s\n", node->child[1]->data.stringVal);
+	
+}
 
 void emit_main_begin(){
 	CODE_OUTPUT("# main routine\n");
@@ -163,6 +201,14 @@ int calSize(pSymNode node){
 		int first = node->link->first->v.i;
 		int last = node->link->last->v.i;
 		return (last - first + 1) * 4;
+	} else if (node->attr == ATTR_RECORD){
+		int totalSize = 0;
+		pSymNode pointer = node->link->first;
+		while(pointer != NULL){
+			totalSize += 4;
+			pointer = pointer->next_link;
+		}
+		return totalSize;
 	}
 }
 
@@ -202,6 +248,7 @@ void writeBss(){
 		if(!bssList.symList[i]->needWrite)
 			continue;
 		switch(bssList.symList[i]->attr){
+			case ATTR_ENUM:
 			case ATTR_BOOL:
 			case ATTR_INTEGER:{
 				fprintf(codeFile,"\t\t.comm\t%s,4,4\n",bssList.symList[i]->rname);
@@ -210,8 +257,12 @@ void writeBss(){
 			case ATTR_ARRAY:{
 				fprintf(codeFile,"\t\t.comm\t%s,%d,4\n",bssList.symList[i]->rname,bssList.symList[i]->size);
 			}
-			case ATTR_REAL:
-			case ATTR_CHAR:
+			case ATTR_RECORD:{
+				//printf("write data record\n");
+				fprintf(codeFile,"\t\t.comm\t%s,%d,4\n",bssList.symList[i]->rname,bssList.symList[i]->size);
+			}
+			case ATTR_REAL:break;
+			case ATTR_CHAR:fprintf(codeFile,"\t\t.comm\t%s,4,4\n",bssList.symList[i]->rname);
 			case ATTR_STRING:break;
 			default:printf("WRITE BSS DEFAULT\n"); break;
 		}
@@ -232,6 +283,7 @@ int insertDataSection(char* str){
 }
 
 void writeData(){
+
 	int i = 0;
 	for(;i < dataCnt; i++){
 		fprintf(dataFile, ".globl %s\n", dataList[i].rname);
@@ -268,6 +320,7 @@ void emit_main_end(){
 void CGStmtIf(pTree node){
 	char else_label[100],exit_label[100];
 	
+	
 	sprintf(else_label,"if_else_%s",CGGetLabel());
 	sprintf(exit_label,"if_exit_%s",CGGetLabel());
 
@@ -279,7 +332,9 @@ void CGStmtIf(pTree node){
 	generateCode(node->child[2],5);
 	fprintf(codeFile, "\t\tjmp\t%s\n",exit_label);
 	fprintf(codeFile, "%s:\n",else_label);
-	generateCode(node->child[3],5);
+	if(node->child[3]!=NULL){
+		generateCode(node->child[3],5);
+	}
 
 	fprintf(codeFile, "%s:\n",exit_label);
 }
@@ -363,14 +418,44 @@ void CGStmtAssign(pTree node,int space){
 		CGFuncReturn(node);
 		return;
 	}
-	insertBss(symnode);
+	if(symnode->attr == ATTR_ENUM){
+		CGHandlEnum(symnode);
+	}
+	else
+		insertBss(symnode);
 	//store the value in %edx
 	generateCode(node->child[2],space+1);		 
 	
-	if(symnode->attr == ATTR_INTEGER || symnode->attr == ATTR_BOOL)
+	if(symnode->attr == ATTR_INTEGER || symnode->attr == ATTR_BOOL || symnode->attr == ATTR_CHAR)
 		fprintf(codeFile,"\t\tmovl\t%%eax,%s\n",symnode->rname);
 
 }
+
+void CGRecordAssign(pTree node){
+
+	int level;
+	pSymNode symnode = searchIDWithinScope(node->child[1]->data.stringVal
+		, currentStack.stack[currentStack.top - 1], &level);
+	fprintf(codeFile, "\t\tleal\t%s,%%eax\n",symnode->rname);
+	insertBss(symnode);
+	
+	pSymNode pointer = symnode->link->first;
+	int offset = 0;
+	while(strcmp(node->child[2]->data.stringVal,pointer->name)!= 0){
+		offset += 4;
+		pointer = pointer->next_link;
+	}
+	fprintf(codeFile, "\t\tmovl\t$%d,%%edx\n",offset);
+	CODE_OUTPUT("\t\taddl\t%edx,%eax\n");
+	CODE_OUTPUT("\t\tpushl\t%eax\n");
+	if(node->child[3]==NULL)
+		printf("child 3 is null\n");
+	else
+		generateCode(node->child[3],10);
+	CODE_OUTPUT("\t\tpopl\t%ebx\n");
+	CODE_OUTPUT("\t\tmovl\t%eax,(%ebx)\n");
+}
+
 
 void CGArrayAssign(pTree node){
 	generateCode(node->child[1],10);
@@ -471,7 +556,7 @@ void CGCaseStmt(pTree node){
 	generateCode(node->child[2],0);
 }
 
-void CGCaseExpr(pTree node){
+void CGCaseExprConst(pTree node){
 	char case_end[100];
 	sprintf(case_end,"case_%s",CGGetLabel());
 	
@@ -485,6 +570,18 @@ void CGCaseExpr(pTree node){
 	fprintf(codeFile,"%s:\n",case_end);
 }
 
+void CGCaseExprId(pTree node){
+	char case_end[100];
+	sprintf(case_end,"case_%s",CGGetLabel());
+	generateCode(node->child[1],0);
+	
+	CODE_OUTPUT("\t\tpopl\t%edx\n");
+	CODE_OUTPUT("\t\tcmpl\t%edx,%eax\n");
+	CODE_OUTPUT("\t\tpushl\t%edx\n");
+	fprintf(codeFile, "\t\tjne\t%s\n", case_end);
+	generateCode(node->child[2],0);
+	fprintf(codeFile,"%s:\n",case_end);
+}
 
 void CGCompare(pTree node){
 	generateCode(node->child[1],15);
@@ -498,7 +595,9 @@ void CGCompare(pTree node){
 			break;
 		}
 		case ATTR_CHAR:{
-			printf("node char\n");
+			//printf("node char\n");
+			CODE_OUTPUT("\t\tpopl\t%edx\n");
+			CODE_OUTPUT("\t\tcmpl\t%eax,%edx\n");
 			break;
 		}
 		case ATTR_STRING:{
@@ -509,6 +608,7 @@ void CGCompare(pTree node){
 			printf("node default\n");
 		}
 	}
+
 	CODE_OUTPUT("\t\tmovl\t$1,%eax\n");
 	char jumpLabel[100];
 	sprintf(jumpLabel,"j_%s",CGGetLabel());
@@ -539,7 +639,27 @@ void CGCompare(pTree node){
  		}	
 	}
 	CODE_OUTPUT("\t\txorl\t%eax,%eax\n");
-	fprintf(codeFile, "%s:\n", jumpLabel);
+	fprintf(codeFile,"%s:\n",jumpLabel);
+}
+
+void CGFactorRecord(pTree node){
+	int level;
+	pSymNode symnode = searchIDWithinScope(node->child[1]->data.stringVal
+		, currentStack.stack[currentStack.top - 1], &level);
+	fprintf(codeFile, "\t\tleal\t%s,%%eax\n",symnode->rname);
+	insertBss(symnode);
+	
+	pSymNode pointer = symnode->link->first;
+	int offset = 0;
+	while(strcmp(node->child[2]->data.stringVal,pointer->name)!= 0){
+		offset += 4;
+		pointer = pointer->next_link;
+	}
+	fprintf(codeFile, "\t\tmovl\t$%d,%%edx\n",offset);
+	CODE_OUTPUT("\t\taddl\t%edx,%eax\n");
+	CODE_OUTPUT("\t\tpushl\t%eax\n");
+	CODE_OUTPUT("\t\tpopl\t%ebx\n");
+	CODE_OUTPUT("\t\tmovl\t(%ebx),%eax\n");
 }
 
 void CGFactorArray(pTree node){
@@ -564,9 +684,74 @@ void CGFactorArray(pTree node){
 
 }
 
-void CGFactorSysFunc(pTree node){
-	printf("FUNC: %s\n", node->data.stringVal);
+void CGSysAbs(pTree node){
+	//printf("do function abs\n");
+	CODE_OUTPUT("\t\tpushl\t%eax\n");
+	fprintf(codeFile, "\t\tpushl\t%%ebp\n");
+    switch(node->attr)
+    {
+    case ATTR_BOOL:
+    case ATTR_INTEGER:
+        fprintf(codeFile, "\t\tcall\t_abs_int\n");
+        break;
+    case ATTR_CHAR:
+        fprintf(codeFile, "\t\txorb\t%%ah,%%ah\n");
+        fprintf(codeFile, "\t\tcall\t_abs_int\n");
+        break;
+    default:printf("ERROR: abs function get an error type!\n");
+        break;
+    }
+	fprintf(codeFile, "\t\taddl\t$8, %%esp\n");
 }
+
+void CGSysChr(pTree node){
+	//CODE_OUTPUT("\t\tpushl\t%eax\n");
+}
+
+void CGSysPred(pTree node){
+	CODE_OUTPUT("\t\tsubl\t$1,%eax\n");
+}
+
+void CGSysSucc(pTree node){
+	CODE_OUTPUT("\t\taddl\t$1,%eax\n");
+}
+
+void CGSysSqr(pTree node){
+	CODE_OUTPUT("\t\tpushl\t%eax\n");
+	CODE_OUTPUT("\t\tpopl\t%edx\n");
+	CODE_OUTPUT("\t\timul\t%edx,%eax\n");
+}
+
+void CGFactorSysFunc(pTree node){
+	//CODE_OUTPUT("#----------\n");
+	generateCode(node->child[2],10);
+	//CODE_OUTPUT("#----------\n");
+	if(strcmp(node->child[1]->data.stringVal,"abs")==0){
+		CGSysAbs(node);
+	} else if(strcmp(node->child[1]->data.stringVal,"chr")==0){
+		CGSysChr(node);
+	} else if(strcmp(node->child[1]->data.stringVal,"odd")==0){
+
+	} else if(strcmp(node->child[1]->data.stringVal,"pred")==0){
+		CGSysPred(node);
+	} else if(strcmp(node->child[1]->data.stringVal,"succ")==0){
+		CGSysSucc(node);
+	} else if(strcmp(node->child[1]->data.stringVal,"sqr")==0){
+		CGSysSqr(node);
+	} else if(strcmp(node->child[1]->data.stringVal,"ord")==0){
+
+	}
+
+	printf("FUNC: %s\n", node->child[1]->data.stringVal);
+	switch(node->attr){
+		case ATTR_INTEGER:printf("attr - integer\n");break;
+		case ATTR_NONE: printf("attr- none\n");break;
+		case ATTR_CHAR: printf("attr- char\n");break;
+		default:printf("attr - default\n");
+	}
+}
+
+
 
 
 void CGFactorFunc(pTree node){
@@ -599,7 +784,10 @@ void CGFactorConst(pTree node){
 			fprintf(codeFile,"\t\tmovl\t$%d,%%eax\n",node->child[1]->data.intVal);
 			break;
 		}
-		case ATTR_REAL:break;
+		case ATTR_REAL:{
+			fprintf(codeFile,"\t\tmovl\t$%d,%%eax\n",(int)node->child[1]->data.realVal);
+			break;
+		}
 		case ATTR_CHAR:{
 			fprintf(codeFile,"\t\tmovl\t$%d,%%eax\n",node->child[1]->data.intVal);
 			break;
@@ -608,7 +796,7 @@ void CGFactorConst(pTree node){
 			int index = insertDataSection(node->child[1]->data.stringVal);
 			if(index >= 0)
 				fprintf(codeFile, "\t\tmovl\t%s,%%eax\n", dataList[index].rname);
-			printf("string data: %s\n",node->child[1]->data.stringVal);
+			printf("string data.: %s\n",node->child[1]->data.stringVal);
 			break;
 		}
 		case ATTR_ARRAY:{
@@ -620,6 +808,21 @@ void CGFactorConst(pTree node){
 			break;
 		}
 		default: printf("WARNING: FACTOR CONST DEFAULT; \n");break;
+	}
+}
+
+int CGGetEnumValue(pSymNode symnode){
+	return symnode->offset;
+}
+
+void CGHandlEnum(pSymNode symnode){
+	pSymNode pointer = symnode->link->first;
+	int order = 0;
+	while(pointer!=NULL){
+		pointer->offset = order++;
+		// printf("%s:%d\n", pointer->name,pointer->offset);
+		pointer = pointer->next_link;
+		
 	}
 }
 
@@ -656,17 +859,36 @@ void CGFactorId(pTree node){
 	int level;
 	pSymNode symnode = searchIDWithinScope(node->data.stringVal
 		, currentStack.stack[currentStack.top - 1], &level);
-	insertBss(symnode);
+	if(symnode->attr != ATTR_ENUM)
+		insertBss(symnode);
 	switch(symnode->attr){
 		case ATTR_BOOL:
 		case ATTR_INTEGER:{
+			//printf("attr-integer\n");
 			fprintf(codeFile,"\t\tmovl\t%s,%%eax\n",symnode->rname);
 			break;
 		}
-		case ATTR_REAL:
-		case ATTR_CHAR:
+		case ATTR_REAL:{
+			fprintf(codeFile,"\t\tmovl\t%s,%%eax\n",symnode->rname);
+			break;
+		}
+		case ATTR_CHAR:{
+			fprintf(codeFile,"\t\tmovl\t%s,%%eax\n",symnode->rname);
+			break;
+		}
 		case ATTR_STRING:break;
-		default:break;
+		case ATTR_ENUM:{
+			int value = CGGetEnumValue(symnode);
+			fprintf(codeFile, "\t\tmovl\t$%d,%%eax\n",value);
+			
+			break;
+		}
+		case ATTR_NONE:{
+			printf("FACTOR_ID_NONE: %s\n",node->data.stringVal);
+			
+			break;
+		}
+		default:printf("FACTOR_ID_DEFAULT\n"); break;
 	}
 	
 }
@@ -675,6 +897,7 @@ void CGFactorId(pTree node){
 void CGOutput(pTree node){
 	generateCode(node->child[3],10);
 	switch(node->child[3]->attr){
+		case ATTR_ENUM:
 		case ATTR_BOOL:
 		case ATTR_INTEGER: {
 			if(strcmp("write",node->child[1]->data.stringVal)==0){
@@ -689,7 +912,7 @@ void CGOutput(pTree node){
 			break;
 		}
 		case ATTR_REAL:{
-			printf("WARNING: we can't output real\n");
+			printf("ERROR: we can't output real number yet.\n");
 			// if(strcmp("write",node->child[1]->data.stringVal)==0){
 			// 	CODE_OUTPUT("\t\tpushl\t%eax\n");
 			// 	CODE_OUTPUT("\t\tpushl\t%ebp\n");
@@ -742,6 +965,7 @@ void CGOutput(pTree node){
 			}
 			break;
 		}
+
 		default:{
 			printf("WRITE DEFAULT!\n");
 		}
@@ -811,6 +1035,8 @@ void generateCode(pTree node,int space){
 		}
 		case tROUTINE_HEAD: 	{
 			printf("tROUTINE_HEAD\n");
+			if(node->child[3]!=NULL)
+				generateCode(node->child[3],space+1);
 			if(node->child[4]!=NULL)
 				generateCode(node->child[4],space+1);
 			break;
@@ -825,8 +1051,16 @@ void generateCode(pTree node,int space){
 		case CONST_DECL: 		printf("CONST_DECL\n");break;
 		case TYPE_DECL : 		printf("TYPE_DECL\n");break;
 		case ARRAY_DECL: 		printf("ARRAY_DECL\n");break;
-		case FIELD_DECL: 		printf("FIELD_DECL\n");break;
-		case VAR_DECL : 		printf("VAR_DECL\n"); break;
+		case FIELD_DECL: 		{
+			printf("FIELD_DECL\n");
+			CGFieldDecl(node);
+			break;
+		}
+		case VAR_DECL : 		{
+			printf("VAR_DECL\n"); 
+			CGVarDecl(node);
+			break;
+		}
 		case FUNCTION_DECL: 	{
 			printf("FUNCTION_DECL\n"); 
 			enter_field(node->symtab);
@@ -882,12 +1116,20 @@ void generateCode(pTree node,int space){
 				generateCode(node->child[0],space+1);
  			break;
  		}
- 		case ASSIGN_STMT_3: 	printf("ASSIGN_STMT_3\n");break;
+ 		case ASSIGN_STMT_3: 	{
+ 			printf("ASSIGN_STMT_3\n");
+ 			CGRecordAssign(node);
+ 			if(node->child[0]!=NULL)
+				generateCode(node->child[0],space+1);
+ 			break;
+ 		}
 		case IF_STMT: 			{
 			//printf("IF_STMT\n");
 			CGStmtIf(node);
-			if(node->child[0]!=NULL)
+			if(node->child[0]!=NULL){
 				generateCode(node->child[0],space+1);
+			}
+
 			break;
 		}
  		case REPEAT_STMT: 		{
@@ -927,12 +1169,18 @@ void generateCode(pTree node,int space){
 		}
  		case CASE_EXPR_CONST:	{
  			printf("CASE_EXPR_CONST\n");
- 			CGCaseExpr(node);
+ 			CGCaseExprConst(node);
  			if(node->child[0]!=NULL)
 				generateCode(node->child[0],space+1);
  			break;
  		}
- 		case CASE_EXPR_ID: 		printf("CASE_EXPR_ID\n");break;
+ 		case CASE_EXPR_ID: 		{
+ 			printf("CASE_EXPR_ID\n");
+ 			CGCaseExprId(node);
+			if(node->child[0]!=NULL)
+				generateCode(node->child[0],space+1);
+ 			break;
+ 		}
  		case GOTO_STMT: 		{
  			printf("GOTO_STMT\n");
  			CGGotoStmt(node);
@@ -986,7 +1234,7 @@ void generateCode(pTree node,int space){
  		}
  		case FACTOR_SYS_FUNC_ARGS: {
  			printf("FACTOR_SYS_FUNC_ARGS\n");
- 			//CGFactorSysFunc(node);
+ 			CGFactorSysFunc(node);
  			if(node->child[0]!=NULL)
 				generateCode(node->child[0],space+1);
  			break;
@@ -1007,7 +1255,11 @@ void generateCode(pTree node,int space){
  			CGFactorArray(node);
  			break;
  		}
- 		case FACTOR_RECORD: 	printf("FACTOR_RECORD\n");break;
+ 		case FACTOR_RECORD: 	{
+ 			printf("FACTOR_RECORD\n");
+ 			CGFactorRecord(node);
+ 			break;
+ 		}
 
 		case PROC_STMT_ID: 		printf("PROC_STMT_ID\n");break;
  		case PROC_STMT_ID_ARGS: {
@@ -1110,7 +1362,7 @@ int CG_main(pTree root,char * target){
 	CODE_OUTPUT("\t\tmovl $0,%ebx\n");
 	CODE_OUTPUT("\t\tmovl $exit_syscall,%eax\n");
 	CODE_OUTPUT("\t\tint $sys_call_id\n\n");
-	CODE_OUTPUT("");						
+					
 	//<!-- to be continued -->
 	writeBss();
 	writeData();
