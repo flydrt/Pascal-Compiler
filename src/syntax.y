@@ -1,14 +1,17 @@
-%code requires{
-#include "tree.h"
-#define YYSTYPE pTree
-}
-
 %{
 #include <stdio.h>
 #include "tree.h"
 extern FILE * yyin;
 static pTree root;
+extern int yylineno;
 %}
+
+%code requires{
+#include "tree.h"
+#define YYSTYPE pTree
+}
+
+%locations
 
 %token DOT PROGRAM ID SEMI CONST EQUAL
 %token INTEGER REAL CHAR STRING SYS_CON
@@ -27,11 +30,13 @@ program : program_head routine DOT {
 			$$->child[2] = $2;
             root = $$;
 		}
+        | program_head routine error
 		;
 
 program_head : PROGRAM ID SEMI {
 				$$ = $2;
 			 }
+             | PROGRAM ID error
 			 ;
 
 routine : routine_head routine_body {
@@ -84,6 +89,8 @@ const_expr_list : const_expr_list ID EQUAL const_value SEMI {
 					$$->child[1] = $1;
 					$$->child[2] = $3;
 				}
+                | const_expr_list ID EQUAL const_value error
+                | ID EQUAL const_value error
 				;
 
 const_value : INTEGER { $$ = $1; }
@@ -116,6 +123,7 @@ type_definition : ID EQUAL type_decl SEMI {
 					$$->child[1] = $1;
 					$$->child[2] = $3;
 				}
+                | ID EQUAL type_decl error
 				;
 
 type_decl : simple_type_decl { $$ = $1; }
@@ -133,6 +141,7 @@ array_type_decl : ARRAY LB simple_type_decl RB OF type_decl {
 record_type_decl : RECORD field_decl_list END {
                     $$ = $2;
                  }
+                 | RECORD field_decl_list error
 				 ;
 
 field_decl_list : field_decl_list field_decl {
@@ -146,6 +155,7 @@ field_decl : name_list COLON type_decl SEMI {
                $$->child[1] = $1;
                $$->child[2] = $3;
            }
+           | name_list COLON type_decl error
 		   ;
 
 name_list : name_list COMMA ID {
@@ -205,6 +215,7 @@ var_decl : name_list COLON type_decl SEMI {
             $$->child[1] = $1;
             $$->child[2] = $3;
          }
+         | name_list COLON type_decl error
 		 ;
 
 routine_part : routine_part function_decl {
@@ -243,6 +254,7 @@ function_decl : function_head SEMI sub_routine SEMI {
                   $$->child[1] = $1;
                   $$->child[2] = $3;
               }
+              | function_head error sub_routine error
 			  ;
 
 function_head : FUNCTION ID parameters COLON simple_type_decl {
@@ -258,6 +270,7 @@ procedure_decl : procedure_head SEMI sub_routine SEMI {
                    $$->child[1] = $1;
                    $$->child[2] = $3;
                }
+               | procedure_head error sub_routine error
 			   ;
 
 procedure_head : PROCEDURE ID parameters {
@@ -283,6 +296,7 @@ para_decl_list : para_decl_list SEMI para_type_list {
 			   | para_type_list {
                    $$ = $1;
                }
+               | para_decl_list error para_type_list
 			   ;
 
 para_type_list : var_para_list COLON simple_type_decl {
@@ -318,6 +332,7 @@ stmt_list : stmt_list stmt SEMI {
                   $$ = $2;
           }
 		  | { $$ = NULL; }
+          | stmt_list stmt error
 		  ;
 
 stmt : INTEGER COLON non_label_stmt {
@@ -380,6 +395,7 @@ proc_stmt : ID {
 		  ;
 
 compound_stmt : PBEGIN stmt_list END { $$ = $2; }
+              | PBEGIN stmt_list error
 			  ;
 
 if_stmt : IF expression THEN stmt else_clause {
@@ -431,6 +447,7 @@ case_stmt : CASE expression OF case_expr_list END {
               $$->child[1] = $2;
               $$->child[2] = $4;
           }
+          | CASE expression OF case_expr_list error
 		  ;
 
 case_expr_list : case_expr_list case_expr {
@@ -455,6 +472,8 @@ case_expr : const_value COLON stmt SEMI {
               $$->child[1] = $1;
               $$->child[2] = $3;
           }
+          | const_value COLON stmt error
+          | ID COLON stmt error
 		  ;
 
 goto_stmt : GOTO INTEGER {
@@ -602,20 +621,6 @@ args_list : args_list COMMA expression {
 
 %%
 
-/*
-int main() {
-	char FILENAME[100];
-    printf("Please input the test file: ");
-    scanf("%s", FILENAME);
-    FILE* file = fopen(FILENAME, "r");
-    yyin = file;
-
-	yyparse();
-
-    return 0;
-}
-*/
-
 pTree parse(FILE * file) {
     yyin = file;
     
@@ -625,5 +630,5 @@ pTree parse(FILE * file) {
 }
 
 int yyerror(char* s) {
-	fprintf(stderr, "%s\n", s);
+	fprintf(stderr, "%s near line %d\n", s, yylineno);
 }

@@ -4,10 +4,16 @@ var
     x : integer;
     a : (red, blue, white);
 
+function f1(a : integer) : integer;
+begin
+
+end;
+
 begin
     case a of
         red: writeln('a');
-        blue: writeln('b');
+        blue: writeln('b')
         white: writeln('c');
     end;
+    x := 3.7;
 end.

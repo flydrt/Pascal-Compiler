@@ -1,10 +1,11 @@
-%option caseless
-
 %{
 #include "tree.h"
 #include "syntax.tab.h"
 int lineno = 1;
 %}
+
+%option caseless
+%option yylineno
 
 digit [0-9]
 real {digit}+\.{digit}+
