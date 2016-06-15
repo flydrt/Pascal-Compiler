@@ -1,15 +1,13 @@
 program wrong_example;
-type
-    ww = record
-        x : integer;
-        y : real;
-        z : char;
-    end;
+
 var
     x : integer;
-    c : ww;
+    a : (red, blue, white);
 
 begin
-    read(c.x);
-    x := abs(c.x);
+    case a of
+        red: writeln('a');
+        blue: writeln('b');
+        white: writeln('c');
+    end;
 end.

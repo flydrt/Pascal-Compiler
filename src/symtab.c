@@ -514,9 +514,9 @@ pSymNode traverseSyntaxTree(pTree root) {
 		case CASE_EXPR_ID: {
 			pSymNode p = searchID(root->child[1]->data.stringVal);
 			if (p) {
-				if (p->type != TYPE_CONST) {
+				if (p->type != TYPE_CONST && p->type != TYPE_ENUM) {
 					//To do
-					parseError(NOT_CONST, root->child[1]->lineno, root->child[1]->data.stringVal);
+					parseError(CASE_STMT_ERROR, root->child[1]->lineno, NULL);
 				}
 				else {
 					if (p->attr == ATTR_INTEGER || p->attr == ATTR_CHAR || p->attr == ATTR_ENUM) {
