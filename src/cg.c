@@ -514,7 +514,9 @@ void CGCompare(pTree node){
 			break;
 		}
 		case ATTR_CHAR:{
-			printf("node char\n");
+			//printf("node char\n");
+			CODE_OUTPUT("\t\tpopl\t%edx\n");
+			CODE_OUTPUT("\t\tcmpl\t%eax,%edx\n");
 			break;
 		}
 		case ATTR_STRING:{
@@ -753,7 +755,10 @@ void CGFactorId(pTree node){
 			fprintf(codeFile,"\t\tmovl\t%s,%%eax\n",symnode->rname);
 			break;
 		}
-		case ATTR_CHAR:
+		case ATTR_CHAR:{
+			fprintf(codeFile,"\t\tmovl\t%s,%%eax\n",symnode->rname);
+			break;
+		}
 		case ATTR_STRING:break;
 		case ATTR_ENUM:{
 			printf("-----***-----\n");

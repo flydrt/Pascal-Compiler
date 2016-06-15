@@ -21,12 +21,12 @@ str_0:
 _main:
 		pushl	%ebp
 		movl	%esp,%ebp
-		leal	a0,%eax
+		leal	c2,%eax
 		pushl	%eax
 		pushl	%ebp
-		call	_read_int
+		call	_read_char
 		addl	$8,%esp
-		movl	a0,%eax
+		movl	c2,%eax
 		pushl	%eax
 		movl	$65,%eax
 		popl	%edx
@@ -45,10 +45,10 @@ j_LABEL2:
 		jmp	if_exit_LABEL1
 if_else_LABEL0:
 if_exit_LABEL1:
-		movl	a0,%eax
+		movl	c2,%eax
 		pushl	%eax
 		pushl	%ebp
-		call	_writeln_int
+		call	_writeln_char
 		addl	$8,%esp
 		leave
 		ret
@@ -61,4 +61,4 @@ _start:
 		int $sys_call_id
 
 #bss section
-		.comm	a0,4,4
+		.comm	c2,4,4
