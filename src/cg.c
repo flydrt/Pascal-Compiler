@@ -785,7 +785,7 @@ void CGFactorConst(pTree node){
 			break;
 		}
 		case ATTR_REAL:{
-
+			fprintf(codeFile,"\t\tmovl\t$%d,%%eax\n",(int)node->child[1]->data.realVal);
 			break;
 		}
 		case ATTR_CHAR:{
@@ -897,6 +897,7 @@ void CGFactorId(pTree node){
 void CGOutput(pTree node){
 	generateCode(node->child[3],10);
 	switch(node->child[3]->attr){
+		case ATTR_ENUM:
 		case ATTR_BOOL:
 		case ATTR_INTEGER: {
 			if(strcmp("write",node->child[1]->data.stringVal)==0){
@@ -911,7 +912,7 @@ void CGOutput(pTree node){
 			break;
 		}
 		case ATTR_REAL:{
-			printf("WARNING: we can't output real\n");
+			printf("ERROR: we can't output real number yet.\n");
 			// if(strcmp("write",node->child[1]->data.stringVal)==0){
 			// 	CODE_OUTPUT("\t\tpushl\t%eax\n");
 			// 	CODE_OUTPUT("\t\tpushl\t%ebp\n");
@@ -964,6 +965,7 @@ void CGOutput(pTree node){
 			}
 			break;
 		}
+
 		default:{
 			printf("WRITE DEFAULT!\n");
 		}
