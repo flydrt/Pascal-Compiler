@@ -56,8 +56,11 @@ void CGCompare(pTree);
 void CGRepeat(pTree);
 void CGWhile(pTree);
 void CGCaseStmt(pTree);
-void CGCaseExpr(pTree);
+void CGCaseExprConst(pTree);
+void CGCaseExprId(pTree);
 void CGHandleVar(pTree);
+void CGHandlEnum(pSymNode);
+int CGGetEnumValue(pSymNode);
 
 void CGVarDecl(pTree);
 void CGFieldDecl(pTree);
@@ -245,6 +248,7 @@ void writeBss(){
 		if(!bssList.symList[i]->needWrite)
 			continue;
 		switch(bssList.symList[i]->attr){
+			case ATTR_ENUM:
 			case ATTR_BOOL:
 			case ATTR_INTEGER:{
 				fprintf(codeFile,"\t\t.comm\t%s,4,4\n",bssList.symList[i]->rname);
@@ -414,7 +418,11 @@ void CGStmtAssign(pTree node,int space){
 		CGFuncReturn(node);
 		return;
 	}
-	insertBss(symnode);
+	if(symnode->attr == ATTR_ENUM){
+		CGHandlEnum(symnode);
+	}
+	else
+		insertBss(symnode);
 	//store the value in %edx
 	generateCode(node->child[2],space+1);		 
 	
@@ -548,7 +556,7 @@ void CGCaseStmt(pTree node){
 	generateCode(node->child[2],0);
 }
 
-void CGCaseExpr(pTree node){
+void CGCaseExprConst(pTree node){
 	char case_end[100];
 	sprintf(case_end,"case_%s",CGGetLabel());
 	
@@ -562,6 +570,18 @@ void CGCaseExpr(pTree node){
 	fprintf(codeFile,"%s:\n",case_end);
 }
 
+void CGCaseExprId(pTree node){
+	char case_end[100];
+	sprintf(case_end,"case_%s",CGGetLabel());
+	generateCode(node->child[1],0);
+	
+	CODE_OUTPUT("\t\tpopl\t%edx\n");
+	CODE_OUTPUT("\t\tcmpl\t%edx,%eax\n");
+	CODE_OUTPUT("\t\tpushl\t%edx\n");
+	fprintf(codeFile, "\t\tjne\t%s\n", case_end);
+	generateCode(node->child[2],0);
+	fprintf(codeFile,"%s:\n",case_end);
+}
 
 void CGCompare(pTree node){
 	generateCode(node->child[1],15);
@@ -791,6 +811,21 @@ void CGFactorConst(pTree node){
 	}
 }
 
+int CGGetEnumValue(pSymNode symnode){
+	return symnode->offset;
+}
+
+void CGHandlEnum(pSymNode symnode){
+	pSymNode pointer = symnode->link->first;
+	int order = 0;
+	while(pointer!=NULL){
+		pointer->offset = order++;
+		// printf("%s:%d\n", pointer->name,pointer->offset);
+		pointer = pointer->next_link;
+		
+	}
+}
+
 void CGHandleVar(pTree node){
 	switch(node->type){
 		case tINTEGER:{
@@ -824,7 +859,8 @@ void CGFactorId(pTree node){
 	int level;
 	pSymNode symnode = searchIDWithinScope(node->data.stringVal
 		, currentStack.stack[currentStack.top - 1], &level);
-	insertBss(symnode);
+	if(symnode->attr != ATTR_ENUM)
+		insertBss(symnode);
 	switch(symnode->attr){
 		case ATTR_BOOL:
 		case ATTR_INTEGER:{
@@ -842,10 +878,9 @@ void CGFactorId(pTree node){
 		}
 		case ATTR_STRING:break;
 		case ATTR_ENUM:{
-			printf("-----***-----\n");
-			printf("FACTOR_ID_ENUM\n");
-			printf("%s\n",symnode->rname);
-			printf("-----***-----\n");
+			int value = CGGetEnumValue(symnode);
+			fprintf(codeFile, "\t\tmovl\t$%d,%%eax\n",value);
+			
 			break;
 		}
 		case ATTR_NONE:{
@@ -1132,12 +1167,18 @@ void generateCode(pTree node,int space){
 		}
  		case CASE_EXPR_CONST:	{
  			printf("CASE_EXPR_CONST\n");
- 			CGCaseExpr(node);
+ 			CGCaseExprConst(node);
  			if(node->child[0]!=NULL)
 				generateCode(node->child[0],space+1);
  			break;
  		}
- 		case CASE_EXPR_ID: 		printf("CASE_EXPR_ID\n");break;
+ 		case CASE_EXPR_ID: 		{
+ 			printf("CASE_EXPR_ID\n");
+ 			CGCaseExprId(node);
+			if(node->child[0]!=NULL)
+				generateCode(node->child[0],space+1);
+ 			break;
+ 		}
  		case GOTO_STMT: 		{
  			printf("GOTO_STMT\n");
  			CGGotoStmt(node);

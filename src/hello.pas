@@ -1,11 +1,18 @@
 program helloworld;
-		var a:record
-				year:integer;
-				month:integer;
-				day:integer;
-		end;
+type color=(red,green,yellow);
+var a:color;b:integer;
 begin
-		a.day := 2015;
-		writeln(a.day);
+	read(b);	
+	case b of
+		1: a:=red;
+		2: a:=green;
+		3: a:=yellow;
+	end;
+	case a of
+		red:	writeln('red');
+		green:	writeln('green');
+		yellow:	writeln('yellow');
+	end;
 end.
+
 
