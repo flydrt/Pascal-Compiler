@@ -27,6 +27,7 @@ typedef struct strStruct{
 }datalink;
 datalink dataList[MAXLIST];
 int dataCnt = 0;
+extern int errorno;
 
 
 void emit_main_begin();
@@ -1343,6 +1344,10 @@ void leave_field(){
 
 int CG_main(pTree root,char * target){
 	init_stack();
+	if(errorno > 0){
+		printf("Error: Can't get the tree\n");
+		return 0;
+	}
 	printf("--------- starting generating code ---------\n");
 	codeFile = fopen("code_part","w");
 	dataFile = fopen("data_part","w");
