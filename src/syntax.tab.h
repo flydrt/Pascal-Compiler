@@ -40,7 +40,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 9 "syntax.y" /* yacc.c:1915  */
+#line 10 "syntax.y" /* yacc.c:1915  */
 
 #include "tree.h"
 #define YYSTYPE pTree

@@ -12,8 +12,7 @@ end;
 begin
     case a of
         red: writeln('a');
-        blue: writeln('b')
+        blue: writeln('b');
         white: writeln('c');
     end;
-    x := 3.7;
 end.

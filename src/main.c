@@ -2,6 +2,8 @@
 #include "symtab.h"
 #include "util.h"
 
+extern int errorno;
+
 extern struct stack symTabStack;
 
 int main() {
@@ -12,6 +14,8 @@ int main() {
 	traverseSyntaxTree(p);
 
 //	printSymTab(symTabStack.top);
+
+	printf("Error number: %d\n", errorno);
 
 	return 0;
 }

@@ -4,6 +4,7 @@
 extern FILE * yyin;
 static pTree root;
 extern int yylineno;
+extern int errorno;
 %}
 
 %code requires{
@@ -630,5 +631,6 @@ pTree parse(FILE * file) {
 }
 
 int yyerror(char* s) {
+    errorno++;
 	fprintf(stderr, "%s near line %d\n", s, yylineno);
 }
