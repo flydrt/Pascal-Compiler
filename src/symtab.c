@@ -248,7 +248,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 			}
 
 			traverseSyntaxTree(root->child[3]);
-			if (root->child[3]->attr != attr) {
+			if (root->child[3]->attr != attr && !(root->child[3]->attr == ATTR_INTEGER && attr == ATTR_REAL)) {
 				//To do
 				parseError(ARRAY_TYPE_NOT_MATCH, root->child[1]->lineno, NULL);
 			}
@@ -305,7 +305,7 @@ pSymNode traverseSyntaxTree(pTree root) {
 
 			IDAttr attr = getAttr(temp);
 			traverseSyntaxTree(root->child[3]);
-			if (attr != root->child[3]->attr) {
+			if (attr != root->child[3]->attr && !(root->child[3]->attr == ATTR_INTEGER && attr == ATTR_REAL)) {
 				//To do
 				parseError(ASSIGN_TYPE_NOT_MATCH, root->child[3]->lineno, NULL);
 			}

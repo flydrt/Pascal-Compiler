@@ -1,18 +1,12 @@
 program wrong_example;
 
 var
-    x : integer;
-    a : (red, blue, white);
-
-function f1(a : integer) : integer;
-begin
-
-end;
-
-begin
-    case a of
-        red: writeln('a');
-        blue: writeln('b');
-        white: writeln('c');
+    a : array [1..3] of real;
+    b : record
+        a : real;
+        b : integer;
     end;
+
+begin
+    b.a := 2 * 4;
 end.
