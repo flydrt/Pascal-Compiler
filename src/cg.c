@@ -159,6 +159,7 @@ int emit_function_begin(pTree node){
 	// CODE_OUTPUT("\t\tsubl\t$8,%esp\n");
 	strcpy(functionName[currentFunPtr++],symnode->rname);
 
+
 	symnode->needWrite = 0;
 	symnode->isReturn = 1;
 	return symnode->argc;
@@ -200,8 +201,11 @@ void changeParmName(pTree node,int argc){
 		, currentStack.stack[currentStack.top - 1], &level);
 	sprintf(symnode->rname,"%d(%%ebp)",argc * 4 + 8);
 	symnode->needWrite = 0;
+	
 	if(node->child[0]!=NULL){
 		changeParmName(node->child[0],argc-1);
+	} else{
+
 	}
 }
 
@@ -440,18 +444,18 @@ void CGStmtAssign(pTree node,int space){
 	int level;
 	pSymNode symnode = searchIDWithinScope(node->child[1]->data.stringVal
 		, currentStack.stack[currentStack.top - 1], &level);
-	if(symnode->isReturn){
-		CGFuncReturn(node);
-		return;
-	}
+	
 	if(symnode->attr == ATTR_ENUM){
 		CGHandlEnum(symnode);
 	}
 	else
 		insertBss(symnode);
-	//store the value in %edx
+	//store the value in %eax
 	generateCode(node->child[2],space+1);		 
-	
+	if(symnode->isReturn){
+		CGFuncReturn(node);
+		return;
+	}
 	if(symnode->attr == ATTR_INTEGER || symnode->attr == ATTR_BOOL ||
 	 symnode->attr == ATTR_CHAR || symnode->attr == ATTR_ENUM)
 		fprintf(codeFile,"\t\tmovl\t%%eax,%s\n",symnode->rname);
@@ -1186,6 +1190,7 @@ void generateCode(pTree node,int space){
 		case FUNCTION_HEAD: 	{
 			printf("FUNCTION_HEAD\n");
 			int argc = emit_function_begin(node);
+
 			changeParmName(node->child[2]->child[1],argc);
 
 			break;

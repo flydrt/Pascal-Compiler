@@ -3,4 +3,14 @@ exit_syscall = 0x1
 
 .data
 
+.globl str_0
+		.section .rodata
+		.align 4
+.LCstr_0:
+		.string "12"
+		.data
+		.align 4
+		.type str_0 @object
+str_0:
+		.long .LCstr_0
 
