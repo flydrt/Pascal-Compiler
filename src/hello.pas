@@ -1,5 +1,6 @@
 program helloworld;
-var a:integer;
+var a:boolean;
 begin
-	a:= 1 + 1 + 1;
+	a := true;
+	writeln(not a);
 end.

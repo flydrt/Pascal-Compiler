@@ -3,31 +3,7 @@ exit_syscall = 0x1
 
 .data
 
-.globl str_0
-		.section .rodata
-		.align 4
-.LCstr_0:
-		.string "hhhhh"
-		.data
-		.align 4
-		.type str_0 @object
-str_0:
-		.long .LCstr_0
 
-# inner7 function
-.text
-.global inner7
-		.type	inner7,@function
-inner7:
-		pushl	%ebp
-		movl	%esp,%ebp
-		subl	$8,%esp
-		pushl	%eax
-		pushl	%ebp
-		call	_writeln_string
-		addl	$8,%esp
-		leave
-		ret
 # main routine
 .text
 .global _main
@@ -35,10 +11,12 @@ inner7:
 _main:
 		pushl	%ebp
 		movl	%esp,%ebp
-		movl	str_0,%eax
+		movl	$1,%eax
+		movl	%eax,a0
+		xorl	$1,%eax
 		pushl	%eax
 		pushl	%ebp
-		call	inner7
+		call	_writeln_int
 		addl	$8,%esp
 		leave
 		ret
@@ -51,3 +29,4 @@ _start:
 		int $sys_call_id
 
 #bss section
+		.comm	a0,4,4

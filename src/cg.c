@@ -56,6 +56,7 @@ void CGFactorArray(pTree);
 void CGFactorFunc(pTree);
 void CGFactorSysFunc(pTree);
 void CGFactorRecord(pTree);
+void CGFactorNot(pTree);
 
 void CGFor(pTree);
 void CGCompare(pTree);
@@ -797,10 +798,17 @@ void CGFactorFunc(pTree node){
 	CODE_OUTPUT("\t\tpushl\t%ebp\n");
 	fprintf(codeFile, "\t\tcall\t%s\n",symnode->rname);
 	CODE_OUTPUT("\t\taddl\t$8,%esp\n");
-//	printf("%s\n", symnode->rname);
+}
 
 
-	//printf("*------*\n");
+void CGFactorNot(pTree node){
+	switch(node->child[1]->attr){
+		case ATTR_BOOL:{
+			CODE_OUTPUT("\t\txorl\t$1,%eax\n");
+			break;
+		}
+		default:printf("ERROR: FACTOR NOT DEFAULT\n");
+	}
 }
 
 void CGFactorConst(pTree node){
@@ -1365,7 +1373,11 @@ void generateCode(pTree node,int space){
  			}
  			break;
  		}
- 		case FACTOR_NOT: 		printf("FACTOR_NOT\n");break;
+ 		case FACTOR_NOT: 		{
+ 			printf("FACTOR_NOT\n");
+ 			CGFactorNot(node);
+ 			break;
+ 		}
  		case FACTOR_MINUS: 		printf("FACTOR_MINUS\n");break;
  		case FACTOR_ARRAY: 		{
  			printf("FACTOR_ARRAY\n");
