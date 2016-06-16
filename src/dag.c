@@ -94,7 +94,7 @@ pTree find_node(Type type,int num,pTree child0,pTree child1,pTree child2,pTree c
     struct dag *p;
     
     i = node_hash(num);
-    printf("num ----%d \n",num);
+    //printf("num ----%d \n",num);
     for (p = hash[i]; p; p = p->hlink)
         if (p->node->type == type && p->node->child[0] == child0)
              if( p->node->child[1] == child1  && p->node->child[2] == child2 )
@@ -127,20 +127,20 @@ pTree find_node(Type type,int num,pTree child0,pTree child1,pTree child2,pTree c
                         break;
                 }
                 if(flag == 1){
-                    printf("found num: %d \n",num);
+                    //printf("found num: %d \n",num);
                     return p->node;
                 }
                 
             }
             else
             {
-                printf("found num: %d \n",num);
+                //printf("found num: %d \n",num);
                 return p->node;
             }
             
         }
     p = new_node(type,num,child0,child1,child2,child3,child4,parent);
-    printf("add,,,%d\n",num);
+    //printf("add,,,%d\n",num);
     p->hlink = hash[i];
     hash[i] = p;
     
@@ -159,6 +159,7 @@ struct dag *new_node(Type type,int num,pTree child0,pTree child1,pTree child2,pT
     tmp->child[2] = child2;
     tmp->child[3] = child3;
     tmp->child[4] = child4;
+    tmp->lineno = parent->lineno;
     if(type == tINTEGER || type == tREAL ||type == tCHAR ||type == tSTRING ||type == tID ){
         
         switch (type) {
@@ -348,6 +349,7 @@ pTree traverse(pTree syntax)
             if(cal_flag ==1){
                 tmp = newTreeNode(kid1->child[1]->type);
                 tmp->data.intVal = a_num;
+                tmp->lineno = kid1->lineno;
                 kid1 = tmp;
                 type = FACTOR_CONST;
                 num = get_num(FACTOR_CONST);
@@ -357,6 +359,7 @@ pTree traverse(pTree syntax)
             else if(cal_flag ==2){
                 tmp = newTreeNode(kid2->child[1]->type);
                 tmp->data.realVal = b_num;
+                tmp->lineno = kid2->lineno;
                 kid1 = tmp;
                 type = FACTOR_CONST;
                 num = get_num(FACTOR_CONST);
@@ -366,6 +369,7 @@ pTree traverse(pTree syntax)
             else if(cal_flag ==3){
                 tmp = newTreeNode(kid1->child[1]->type);
                 tmp->data.realVal = b_num;
+                tmp->lineno = kid1->lineno;
                 kid1 = tmp;
                 type = FACTOR_CONST;
                 num = get_num(FACTOR_CONST);
