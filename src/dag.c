@@ -160,6 +160,8 @@ struct dag *new_node(Type type,int num,pTree child0,pTree child1,pTree child2,pT
     tmp->child[3] = child3;
     tmp->child[4] = child4;
     tmp->lineno = parent->lineno;
+    tmp->attr = parent->attr;
+    tmp->symtab = parent->symtab;
     if(type == tINTEGER || type == tREAL ||type == tCHAR ||type == tSTRING ||type == tID ){
         
         switch (type) {
@@ -189,7 +191,7 @@ struct dag *new_node(Type type,int num,pTree child0,pTree child1,pTree child2,pT
 }
 
 
-/*pTree traverse(pTree syntax)
+pTree traverse(pTree syntax)
 {
     pTree p = NULL, kid0,kid1,kid2,kid3,kid4;
     Type type;
@@ -211,9 +213,9 @@ struct dag *new_node(Type type,int num,pTree child0,pTree child1,pTree child2,pT
     
     return p;
     
-}*/
+}
 
-pTree traverse(pTree syntax)
+/*pTree traverse(pTree syntax)
 {
     pTree p = NULL, kid0,kid1,kid2,kid3,kid4,tmp;
     int a_num = 0;
@@ -383,7 +385,7 @@ pTree traverse(pTree syntax)
      p = find_node(type, num, kid0, kid1, kid2, kid3, kid4, syntax);
      return p;
 
-}
+}*/
 
 int get_num(Type type){
     int numl=0;
