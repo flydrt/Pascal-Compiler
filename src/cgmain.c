@@ -12,7 +12,7 @@ int main() {
 	pTree p = parse(file);
 	traverseSyntaxTree(p);
 	pTree dag = traverse(p);
-	CG_main(dag,"result.s");
+	CG_main(p,"result.s");
 //	printSymTab();
 
 	return 0;
