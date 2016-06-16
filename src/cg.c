@@ -444,12 +444,12 @@ void CGStmtAssign(pTree node,int space){
 	int level;
 	pSymNode symnode = searchIDWithinScope(node->child[1]->data.stringVal
 		, currentStack.stack[currentStack.top - 1], &level);
-	
 	if(symnode->attr == ATTR_ENUM){
 		CGHandlEnum(symnode);
 	}
-	else
+	else{
 		insertBss(symnode);
+	}
 	//store the value in %eax
 	generateCode(node->child[2],space+1);		 
 	if(symnode->isReturn){
