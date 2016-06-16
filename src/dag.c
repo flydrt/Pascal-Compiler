@@ -101,7 +101,7 @@ pTree find_node(Type type,int num,pTree child0,pTree child1,pTree child2,pTree c
                  if(p->node->child[3] == child3  && p->node->child[4] == child4)
         {
             flag = 0;
-            if(type == tINTEGER || type == tREAL ||type == tCHAR ||type == tSTRING ||type == tID ){
+            if(type == tINTEGER || type == tREAL ||type == tCHAR ||type == tSTRING ||type == tID || type== FACTOR_ID ){
                 
                 switch (type) {
                     case tINTEGER:
@@ -119,6 +119,7 @@ pTree find_node(Type type,int num,pTree child0,pTree child1,pTree child2,pTree c
                     case tSTRING:
                     case tID:
                     case tSYS_CON:
+                    case FACTOR_ID:
                         if(strcmp(p->node->data.stringVal,parent->data.stringVal)==0)
                             flag =1;
                         break;
@@ -202,7 +203,7 @@ struct dag *new_node(Type type,int num,pTree child0,pTree child1,pTree child2,pT
 }
 
 
-pTree traverse(pTree syntax)
+/*pTree traverse(pTree syntax)
 {
     pTree p = NULL, kid0,kid1,kid2,kid3,kid4;
     Type type;
@@ -224,11 +225,11 @@ pTree traverse(pTree syntax)
     
     return p;
     
-}
+}*/
 
-/*pTree traverse(pTree syntax)
+pTree traverse(pTree syntax)
 {
-    pTree p = NULL, kid0,kid1,kid2,kid3,kid4,tmp;
+    pTree p = NULL, kid0,kid1,kid2,kid3,kid4,tmp = NULL;
     int a_num = 0;
     double b_num = 0;
     int cal_flag=0;
@@ -363,31 +364,42 @@ pTree traverse(pTree syntax)
                 tmp = newTreeNode(kid1->child[1]->type);
                 tmp->data.intVal = a_num;
                 tmp->lineno = kid1->lineno;
-                kid1 = tmp;
-                type = FACTOR_CONST;
-                num = get_num(FACTOR_CONST);
-                kid2 = kid3 = kid4 = kid0 = NULL;
+//                kid1 = tmp;
+//                type = FACTOR_CONST;
+//                num = get_num(FACTOR_CONST);
+//                kid2 = kid3 = kid4 = kid0 = NULL;
                 
             }
             else if(cal_flag ==2){
                 tmp = newTreeNode(kid2->child[1]->type);
                 tmp->data.realVal = b_num;
                 tmp->lineno = kid2->lineno;
-                kid1 = tmp;
-                type = FACTOR_CONST;
-                num = get_num(FACTOR_CONST);
-                kid2 = kid3 = kid4 = kid0 = NULL;
+//                kid1 = tmp;
+//                type = FACTOR_CONST;
+//                num = get_num(FACTOR_CONST);
+//                kid2 = kid3 = kid4 = kid0 = NULL;
                 
             }
             else if(cal_flag ==3){
                 tmp = newTreeNode(kid1->child[1]->type);
                 tmp->data.realVal = b_num;
                 tmp->lineno = kid1->lineno;
-                kid1 = tmp;
-                type = FACTOR_CONST;
-                num = get_num(FACTOR_CONST);
-                kid2 = kid3 = kid4 = kid0 = NULL;
+//                kid1 = tmp;
+//                type = FACTOR_CONST;
+//                num = get_num(FACTOR_CONST);
+//                kid2 = kid3 = kid4 = kid0 = NULL;
             }
+            if(cal_flag !=0){
+                syntax->type = FACTOR_CONST;
+                syntax->child[0] = NULL;
+                syntax->child[1] = tmp;
+                syntax->child[2] = NULL;
+                syntax->child[3] = NULL;
+                syntax->child[4] = NULL;
+                return syntax;
+                
+            }
+ 
 
         }
     }
@@ -396,7 +408,7 @@ pTree traverse(pTree syntax)
      p = find_node(type, num, kid0, kid1, kid2, kid3, kid4, syntax);
      return p;
 
-}*/
+}
 
 int get_num(Type type){
     int numl=0;
