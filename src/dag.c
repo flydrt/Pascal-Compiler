@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <string.h>
+//#include "mytree.h"
 #include "tree.h"
 #include <stdlib.h>
 #include "dag.h"
@@ -48,7 +49,7 @@ void add_queue(pTree node){
     
 }
 void initial_print_dag(pTree mydag){
-   
+    
     head = (struct dag *)malloc(sizeof(struct dag));
     tail = (struct dag *)malloc(sizeof(struct dag));
     head->hlink = NULL;
@@ -66,7 +67,7 @@ pTree get_head(){
     tmp3 = head;
     head = head->hlink ;
     size--;
-   // head = tmp3;
+    // head = tmp3;
     return tmp3->node;
 }
 void print_dag(pTree mydag){
@@ -93,10 +94,11 @@ pTree find_node(Type type,int num,pTree child0,pTree child1,pTree child2,pTree c
     struct dag *p;
     
     i = node_hash(num);
-
+    printf("num ----%d \n",num);
     for (p = hash[i]; p; p = p->hlink)
-        if (p->node->type == type && p->node->child[0] == child0
-            &&  p->node->child[1] == child1  && p->node->child[2] == child2  && p->node->child[3] == child3  && p->node->child[4] == child4)
+        if (p->node->type == type && p->node->child[0] == child0)
+             if( p->node->child[1] == child1  && p->node->child[2] == child2 )
+                 if(p->node->child[3] == child3  && p->node->child[4] == child4)
         {
             flag = 0;
             if(type == tINTEGER || type == tREAL ||type == tCHAR ||type == tSTRING ||type == tID ){
@@ -116,11 +118,11 @@ pTree find_node(Type type,int num,pTree child0,pTree child1,pTree child2,pTree c
                         break;
                     case tSTRING:
                     case tID:
-					case tSYS_CON:
+                    case tSYS_CON:
                         if(strcmp(p->node->data.stringVal,parent->data.stringVal)==0)
                             flag =1;
                         break;
-            
+                        
                     default:
                         break;
                 }
@@ -138,6 +140,7 @@ pTree find_node(Type type,int num,pTree child0,pTree child1,pTree child2,pTree c
             
         }
     p = new_node(type,num,child0,child1,child2,child3,child4,parent);
+    printf("add,,,%d\n",num);
     p->hlink = hash[i];
     hash[i] = p;
     
@@ -164,14 +167,14 @@ struct dag *new_node(Type type,int num,pTree child0,pTree child1,pTree child2,pT
                 break;
             case tREAL:
                 tmp->data.realVal = parent->data.realVal;
-                   
+                
                 break;
             case tCHAR:
                 tmp->data.charVal = parent->data.charVal;
                 break;
             case tSTRING:
             case tID:
-			case tSYS_CON:
+            case tSYS_CON:
                 tmp->data.stringVal = copyString(parent->data.stringVal);
                 break;
             default:
@@ -185,7 +188,7 @@ struct dag *new_node(Type type,int num,pTree child0,pTree child1,pTree child2,pT
 }
 
 
-pTree traverse(pTree syntax)
+/*pTree traverse(pTree syntax)
 {
     pTree p = NULL, kid0,kid1,kid2,kid3,kid4;
     Type type;
@@ -202,12 +205,182 @@ pTree traverse(pTree syntax)
     kid2 = traverse(syntax->child[2]);
     kid3 = traverse(syntax->child[3]);
     kid4 = traverse(syntax->child[4]);
-   
+    
     p = find_node(type, num, kid0, kid1, kid2, kid3, kid4, syntax);
     
     return p;
     
+}*/
+
+pTree traverse(pTree syntax)
+{
+    pTree p = NULL, kid0,kid1,kid2,kid3,kid4,tmp;
+    int a_num = 0;
+    double b_num = 0;
+    int cal_flag=0;
+    Type type;
+    int num=0;
+    if (syntax == NULL)
+        return NULL;
+    
+    kid0 = kid1 = kid2 = kid3 = kid4 = NULL;
+    
+    type = syntax->type;
+    num = get_num(syntax->type);
+    kid0 = traverse(syntax->child[0]);
+    kid1 = traverse(syntax->child[1]);
+    kid2 = traverse(syntax->child[2]);
+    kid3 = traverse(syntax->child[3]);
+    kid4 = traverse(syntax->child[4]);
+
+    if(num >= 35 && num <= 41 ){
+        if(kid1->type == FACTOR_CONST && kid2->type==FACTOR_CONST){
+            if( (kid1->child[1]->type == tINTEGER) && (kid2->child[1]->type == tINTEGER)){
+                
+                switch (type) {
+                    case ePLUS:
+                        a_num =  kid1->child[1]->data.intVal + kid2->child[1]->data.intVal;
+                        cal_flag=1;
+                        break;
+                    case eMINUS:
+                         a_num =  kid1->child[1]->data.intVal - kid2->child[1]->data.intVal;
+                        cal_flag=1;
+                        break;
+                    case eMUL:
+                         a_num =  kid1->child[1]->data.intVal * kid2->child[1]->data.intVal;
+                        cal_flag=1;
+                        break;
+                    case eDIV:
+                         a_num =  kid1->child[1]->data.intVal / kid2->child[1]->data.intVal;
+                        cal_flag=1;
+                        break;
+                    case eAND:
+                         a_num =  kid1->child[1]->data.intVal & kid2->child[1]->data.intVal;
+                        cal_flag=1;
+                        break;
+                    case eOR:
+                         a_num =  kid1->child[1]->data.intVal | kid2->child[1]->data.intVal;
+                        cal_flag=1;
+                        break;
+                    case eMOD:
+                         a_num =  kid1->child[1]->data.intVal % kid2->child[1]->data.intVal;
+                        cal_flag=1;
+                        break;
+                        
+                    default:
+                        break;
+                }
+               
+            }
+            else if( (kid1->child[1]->type == tINTEGER) && (kid2->child[1]->type == tREAL)){
+                
+                switch (type) {
+                    case ePLUS:
+                        b_num =  kid1->child[1]->data.intVal + kid2->child[1]->data.realVal;
+                        cal_flag=2;
+                        break;
+                    case eMINUS:
+                        b_num =  kid1->child[1]->data.intVal - kid2->child[1]->data.realVal;
+                        cal_flag=2;
+                        break;
+                    case eMUL:
+                        b_num =  kid1->child[1]->data.intVal * kid2->child[1]->data.realVal;
+                        cal_flag=2;
+                        break;
+                    case eDIV:
+                        b_num =  kid1->child[1]->data.intVal / kid2->child[1]->data.realVal;
+                        cal_flag=2;
+                        break;
+                        
+                    default:
+                        break;
+                }
+            }
+            else if( (kid1->child[1]->type == tREAL) && (kid2->child[1]->type == tINTEGER)){
+                
+                switch (type) {
+                    case ePLUS:
+                        b_num =  kid1->child[1]->data.realVal + kid2->child[1]->data.intVal;
+                        cal_flag=3;
+                        break;
+                    case eMINUS:
+                        b_num =  kid1->child[1]->data.realVal - kid2->child[1]->data.intVal;
+                        cal_flag=3;
+                        break;
+                    case eMUL:
+                        b_num =  kid1->child[1]->data.realVal * kid2->child[1]->data.intVal;
+                        cal_flag=3;
+                        break;
+                    case eDIV:
+                        b_num =  kid1->child[1]->data.realVal / kid2->child[1]->data.intVal;
+                        cal_flag=3;
+                        break;
+                        
+                    default:
+                        break;
+                }
+            }
+            else{
+                
+                switch (type) {
+                    case ePLUS:
+                        b_num =  kid1->child[1]->data.realVal + kid2->child[1]->data.realVal;
+                        cal_flag=3;
+                        break;
+                    case eMINUS:
+                        b_num =  kid1->child[1]->data.realVal - kid2->child[1]->data.realVal;
+                        cal_flag=3;
+                        break;
+                    case eMUL:
+                        b_num =  kid1->child[1]->data.realVal * kid2->child[1]->data.realVal;
+                        cal_flag=3;
+                        break;
+                    case eDIV:
+                        b_num =  kid1->child[1]->data.realVal / kid2->child[1]->data.realVal;
+                        cal_flag=3;
+                        break;
+                        
+                    default:
+                        break;
+                }
+            }
+            
+            if(cal_flag ==1){
+                tmp = newTreeNode(kid1->child[1]->type);
+                tmp->data.intVal = a_num;
+                kid1 = tmp;
+                type = FACTOR_CONST;
+                num = get_num(FACTOR_CONST);
+                kid2 = kid3 = kid4 = kid0 = NULL;
+                
+            }
+            else if(cal_flag ==2){
+                tmp = newTreeNode(kid2->child[1]->type);
+                tmp->data.realVal = b_num;
+                kid1 = tmp;
+                type = FACTOR_CONST;
+                num = get_num(FACTOR_CONST);
+                kid2 = kid3 = kid4 = kid0 = NULL;
+                
+            }
+            else if(cal_flag ==3){
+                tmp = newTreeNode(kid1->child[1]->type);
+                tmp->data.realVal = b_num;
+                kid1 = tmp;
+                type = FACTOR_CONST;
+                num = get_num(FACTOR_CONST);
+                kid2 = kid3 = kid4 = kid0 = NULL;
+            }
+
+        }
+    }
+
+   	
+     p = find_node(type, num, kid0, kid1, kid2, kid3, kid4, syntax);
+     return p;
+
 }
+
 int get_num(Type type){
     int numl=0;
     switch (type) {
@@ -258,26 +431,26 @@ int get_num(Type type){
         case	tSIMPLE_ENUM : numl = 45;break;
         case	tSIMPLE_SUBRANGE: numl = 46;break;
         case	tSIMPLE_SUBRANGE_ID: numl = 47;break;
-		case	tSYS_CON: numl = 48;break;
+        case	tSYS_CON: numl = 48;break;
         case	tINTEGER: numl = 49;break;
         case	tREAL: numl = 50;break;
         case	tCHAR : numl = 51;break;
         case	tSTRING: numl = 52;break;
         case	tID: numl = 53;break;
-		case	FACTOR_ID: numl = 54;break;
-		case	FACTOR_FUNC: numl = 55;break;
-		case	FACTOR_CONST: numl = 56;break;
-		case	FACTOR_NOT: numl = 57;break;
-		case	FACTOR_MINUS: numl = 58;break;
-		case	FACTOR_ARRAY: numl = 59;break;
-		case	FACTOR_RECORD: numl = 60;break;
-		case	PROC_STMT_ID: numl = 61;break;
-		case	PROC_STMT_ID_ARGS: numl = 62;break;
-		case	PROC_STMT_SYS_EXPR: numl = 63;break;
-		case	PROC_STMT_READ: numl = 64;break;
-		case    eRDIV:numl = 65;break;
-		case    tSYS_PROC :numl = 66;break;
-		case	FACTOR_SYS_FUNC_ARGS: numl = 67;break;
+        case	FACTOR_ID: numl = 54;break;
+        case	FACTOR_FUNC: numl = 55;break;
+        case	FACTOR_CONST: numl = 56;break;
+        case	FACTOR_NOT: numl = 57;break;
+        case	FACTOR_MINUS: numl = 58;break;
+        case	FACTOR_ARRAY: numl = 59;break;
+        case	FACTOR_RECORD: numl = 60;break;
+        case	PROC_STMT_ID: numl = 61;break;
+        case	PROC_STMT_ID_ARGS: numl = 62;break;
+        case	PROC_STMT_SYS_EXPR: numl = 63;break;
+        case	PROC_STMT_READ: numl = 64;break;
+        case    eRDIV:numl = 65;break;
+        case    tSYS_PROC :numl = 66;break;
+        case	FACTOR_SYS_FUNC_ARGS: numl = 67;break;
         default:
             break;
     }
@@ -285,36 +458,43 @@ int get_num(Type type){
     
 }
 /*int main(int argc, const char * argv[]) {
-    
-    pTree test,test1,test2,test3,myout;
-    pTree test11,test21,test22,test31,test32;
+ 
+    pTree test,test1,test2,test3,myout,myout2;
+    pTree test11,test21,test12,test22,test31,test32;
     pTree test4,test41,test42;
     test = newTreeNode(tPROGRAM);
-    test1 = newTreeNode(tROUTINE);
-    test2 = newTreeNode(tSUB_ROUTINE);
-    test3 = newTreeNode(tROUTINE_HEAD);
-    test11 = newTreeNode(CONST_DECL);
-    test21 = newTreeNode(TYPE_DECL);
-    test22 = newTreeNode(ARRAY_DECL);
-    test31 = newTreeNode(FIELD_DECL);
-    test32 = newTreeNode(tREAL);
-    test32->data.realVal=1.1;
-    test4 = newTreeNode(tROUTINE_HEAD);
-    test41 = newTreeNode(FIELD_DECL);
-    test42 = newTreeNode(tREAL);
-    test42->data.realVal=1.12;
+    
+    test1 = newTreeNode(ePLUS);
+    test11 = newTreeNode(ePLUS);
+    test12 = newTreeNode(FACTOR_CONST);
+    
+    pTree test111 = newTreeNode(FACTOR_CONST);
+    pTree test112 = newTreeNode(FACTOR_CONST);
+    pTree test1111 = newTreeNode(tINTEGER);
+    pTree test1112 = newTreeNode(tREAL);
+    test1111->data.intVal = 5;
+    test1112->data.realVal = 4.5;
+    
+    test2 = newTreeNode(FACTOR_CONST);
+    test21 = newTreeNode(tINTEGER);
+    test21->data.intVal=1;
+    test2->child[1] = test21;
+    
     test->child[0] = test1;
     test->child[1] = test2;
-    test->child[2] = test3;
-    test1->child[0] = test11;
-    test2->child[0] = test21;
-    test2->child[1] = test22;
-    test3->child[0] = test31;
-    test3->child[1] = test32;
+   
+    test1->child[1] = test11;
+    test1->child[2] = test12;
+    pTree test121 = newTreeNode(tREAL);
+    test121->data.realVal = 2.3;
+    test12->child[1] = test121;
     
-    test->child[3] = test4;
-    test4->child[0]= test41;
-    test4->child[1] =test42;
+    test11->child[1] = test111;
+    test11->child[2] = test112;
+    
+    test111->child[1] = test1111;
+    test112->child[1] = test1112;
+
     
     myout = traverse(test);
     print_dag(myout);
