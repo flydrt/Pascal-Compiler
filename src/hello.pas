@@ -1,17 +1,29 @@
 program helloworld;
 type color=(red,yellow,green);
 var a,c:integer;b:color;
+function test(b:integer):integer;
+var a:integer;
 begin
-	read(a);
-	b := red;
-	case a of
-		1: b := red;
-		2: b := yellow;
-		3: b := green;
+	if b > 0 
+	then begin
+		writeln(b);
+		b := b - 1;
+		a := test(b);
+	end
+	else begin
+		test:=a;
 	end;
-	case b of
-		red: writeln('red'); 
-		green: writeln('green');
-		yellow: writeln('yellow');
-	end;
+end;
+
+procedure outer(x,y:integer);
+var a:integer;
+begin
+	a := x * y;
+	write('The a of Outer is:');
+
+end;
+begin
+	a := 1;
+	c := 2;
+	outer(a,c);
 end.

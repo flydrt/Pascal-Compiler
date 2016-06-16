@@ -122,7 +122,6 @@ void emit_main_begin(){
 	CODE_OUTPUT("\t\tmovl\t%esp,%ebp\n");
 
 	//bssList.size = 0;
-	memset(dataList,0,sizeof(datalink)*MAXLIST);
 	
 }
 
@@ -273,8 +272,10 @@ void writeBss(){
 	}
 }
 int insertDataSection(char* str){
-	if(strcmp(str,"")==0)
+	if(strcmp(str,"")==0){
+		printf("ERROR: insert empty data\n");
 		return -1;
+	}
 	int i = 0;
 	for(;i < dataCnt; i++){
 		if(strcmp(dataList[i].string,str)==0)
@@ -1333,7 +1334,7 @@ void init_stack(){
 		bssList.symList[i] = NULL;
 	}
 	currentStack.top = 0;
-	
+	memset(dataList,0,sizeof(datalink)*MAXLIST);
 	for(;i < MAXFIELD; i++)
 		currentStack.stack[i] = NULL;
 }

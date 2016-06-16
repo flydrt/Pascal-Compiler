@@ -7,33 +7,77 @@ exit_syscall = 0x1
 		.section .rodata
 		.align 4
 .LCstr_0:
-		.string "red"
+		.string "The a of Outer is:"
 		.data
 		.align 4
 		.type str_0 @object
 str_0:
 		.long .LCstr_0
-.globl str_1
-		.section .rodata
-		.align 4
-.LCstr_1:
-		.string "green"
-		.data
-		.align 4
-		.type str_1 @object
-str_1:
-		.long .LCstr_1
-.globl str_2
-		.section .rodata
-		.align 4
-.LCstr_2:
-		.string "yellow"
-		.data
-		.align 4
-		.type str_2 @object
-str_2:
-		.long .LCstr_2
 
+# test34 function
+.text
+.global test34
+		.type	test34,@function
+test34:
+		pushl	%ebp
+		movl	%esp,%ebp
+		subl	$8,%esp
+		movl	12(%ebp),%eax
+		pushl	%eax
+		movl	$0,%eax
+		popl	%edx
+		cmpl	%eax,%edx
+		movl	$1,%eax
+		jg	j_LABEL2
+		xorl	%eax,%eax
+j_LABEL2:
+		cmpl	$1,%eax
+		jl	if_else_LABEL0
+		movl	12(%ebp),%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_writeln_int
+		addl	$8,%esp
+		movl	12(%ebp),%eax
+		pushl	%eax
+		movl	$1,%eax
+		popl	%edx
+		subl	%eax,%edx
+		movl	%edx,%eax
+		movl	%eax,12(%ebp)
+		movl	12(%ebp),%eax
+		pushl	%eax
+		pushl	%ebp
+		call	test34
+		addl	$8,%esp
+		movl	%eax,a0
+		jmp	if_exit_LABEL1
+if_else_LABEL0:
+		movl	%eax,-4(%ebp)
+if_exit_LABEL1:
+		leave
+		ret
+# outer32 function
+.text
+.global outer32
+		.type	outer32,@function
+outer32:
+		pushl	%ebp
+		movl	%esp,%ebp
+		subl	$8,%esp
+		movl	16(%ebp),%eax
+		pushl	%eax
+		movl	12(%ebp),%eax
+		popl	%edx
+		imul	%edx,%eax
+		movl	%eax,a12
+		movl	str_0,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_write_string
+		addl	$8,%esp
+		leave
+		ret
 # main routine
 .text
 .global _main
@@ -41,74 +85,17 @@ str_2:
 _main:
 		pushl	%ebp
 		movl	%esp,%ebp
-		leal	a0,%eax
-		pushl	%eax
-		pushl	%ebp
-		call	_read_int
-		addl	$8,%esp
-		movl	$0,%eax
-		movl	%eax,b1
-		movl	a0,%eax
-		pushl	%eax
 		movl	$1,%eax
-		popl	%edx
-		cmpl	%edx,%eax
-		pushl	%edx
-		jne	case_LABEL0
-		movl	$0,%eax
-		movl	%eax,b1
-case_LABEL0:
+		movl	%eax,a26
 		movl	$2,%eax
-		popl	%edx
-		cmpl	%edx,%eax
-		pushl	%edx
-		jne	case_LABEL1
-		movl	$1,%eax
-		movl	%eax,b1
-case_LABEL1:
-		movl	$3,%eax
-		popl	%edx
-		cmpl	%edx,%eax
-		pushl	%edx
-		jne	case_LABEL2
-		movl	$2,%eax
-		movl	%eax,b1
-case_LABEL2:
-		movl	b1,%eax
+		movl	%eax,c28
+		movl	a26,%eax
 		pushl	%eax
-		movl	$0,%eax
-		popl	%edx
-		cmpl	%edx,%eax
-		pushl	%edx
-		jne	case_LABEL3
-		movl	str_0,%eax
+		movl	c28,%eax
 		pushl	%eax
 		pushl	%ebp
-		call	_writeln_string
+		call	outer32
 		addl	$8,%esp
-case_LABEL3:
-		movl	$2,%eax
-		popl	%edx
-		cmpl	%edx,%eax
-		pushl	%edx
-		jne	case_LABEL4
-		movl	str_1,%eax
-		pushl	%eax
-		pushl	%ebp
-		call	_writeln_string
-		addl	$8,%esp
-case_LABEL4:
-		movl	$1,%eax
-		popl	%edx
-		cmpl	%edx,%eax
-		pushl	%edx
-		jne	case_LABEL5
-		movl	str_2,%eax
-		pushl	%eax
-		pushl	%ebp
-		call	_writeln_string
-		addl	$8,%esp
-case_LABEL5:
 		leave
 		ret
 
@@ -121,4 +108,6 @@ _start:
 
 #bss section
 		.comm	a0,4,4
-		.comm	b1,4,4
+		.comm	a12,4,4
+		.comm	a26,4,4
+		.comm	c28,4,4
