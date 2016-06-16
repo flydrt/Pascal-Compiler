@@ -27,7 +27,12 @@ typedef struct strStruct{
 }datalink;
 datalink dataList[MAXLIST];
 int dataCnt = 0;
+int gointToOutput = 0;
+int isWrite = 0;
 extern int errorno;
+
+char functionName[100][100];
+int currentFunPtr = 0;
 
 
 void emit_main_begin();
@@ -73,6 +78,7 @@ void CGSysSucc(pTree);
 void CGSysSqr(pTree);
 
 void CGOutput(pTree);
+void CGOutput2(pTree);
 void CGInput(pTree);
 void CGloadAddress(pSymNode);
 char* CGGetLabel();
@@ -125,19 +131,34 @@ void emit_main_begin(){
 	
 }
 
+void emit_function_begin2(){
+	int i = currentFunPtr - 1;
+	fprintf(codeFile, "# %s function\n", functionName[i]);
+	CODE_OUTPUT(".text\n");
+	fprintf(codeFile, ".global %s\n", functionName[i]);
+	fprintf(codeFile, "\t\t.type\t%s,@function\n",functionName[i]);
+	fprintf(codeFile, "%s:\n", functionName[i]);
+	CODE_OUTPUT("\t\tpushl\t%ebp\n");
+	CODE_OUTPUT("\t\tmovl\t%esp,%ebp\n");
+	CODE_OUTPUT("\t\tsubl\t$8,%esp\n");
+	currentFunPtr--;
+}
+
 int emit_function_begin(pTree node){
 	int level;
 	pSymNode symnode = searchIDWithinScope(node->child[1]->data.stringVal
 		, currentStack.stack[currentStack.top - 1], &level);
 	
-	fprintf(codeFile, "# %s function\n", symnode->rname);
-	CODE_OUTPUT(".text\n");
-	fprintf(codeFile, ".global %s\n", symnode->rname);
-	fprintf(codeFile, "\t\t.type\t%s,@function\n",symnode->rname);
-	fprintf(codeFile, "%s:\n", symnode->rname);
-	CODE_OUTPUT("\t\tpushl\t%ebp\n");
-	CODE_OUTPUT("\t\tmovl\t%esp,%ebp\n");
-	CODE_OUTPUT("\t\tsubl\t$8,%esp\n");
+	// fprintf(codeFile, "# %s function\n", symnode->rname);
+	// CODE_OUTPUT(".text\n");
+	// fprintf(codeFile, ".global %s\n", symnode->rname);
+	// fprintf(codeFile, "\t\t.type\t%s,@function\n",symnode->rname);
+	// fprintf(codeFile, "%s:\n", symnode->rname);
+	// CODE_OUTPUT("\t\tpushl\t%ebp\n");
+	// CODE_OUTPUT("\t\tmovl\t%esp,%ebp\n");
+	// CODE_OUTPUT("\t\tsubl\t$8,%esp\n");
+	strcpy(functionName[currentFunPtr++],symnode->rname);
+
 	symnode->needWrite = 0;
 	symnode->isReturn = 1;
 	return symnode->argc;
@@ -915,10 +936,75 @@ void CGFactorId(pTree node){
 	}
 	
 }
+void CGOutput2(pTree node){
+	switch(node->attr){
+		case ATTR_ENUM:
+		case ATTR_BOOL:
+		case ATTR_INTEGER: {
+			if(isWrite){
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
+				CODE_OUTPUT("\t\tpushl\t%ebp\n");
+				CODE_OUTPUT("\t\tcall\t_write_int\n");
+			} else {
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
+				CODE_OUTPUT("\t\tpushl\t%ebp\n");
+				CODE_OUTPUT("\t\tcall\t_writeln_int\n");
+			}
+			break;
+		}
+		case ATTR_REAL:{
+			printf("ERROR: we can't output real number yet.\n");
+			break;
+		}
+		case ATTR_STRING:{
+			if(isWrite){
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
+				CODE_OUTPUT("\t\tpushl\t%ebp\n");
+				CODE_OUTPUT("\t\tcall\t_write_string\n");
+			} else{
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
+				CODE_OUTPUT("\t\tpushl\t%ebp\n");
+				CODE_OUTPUT("\t\tcall\t_writeln_string\n");
+			}
+			break;
+		}
+		case ATTR_CHAR:{
+			if(isWrite){
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
+				CODE_OUTPUT("\t\tpushl\t%ebp\n");
+				CODE_OUTPUT("\t\tcall\t_write_char\n");
+			} else{
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
+				CODE_OUTPUT("\t\tpushl\t%ebp\n");
+				CODE_OUTPUT("\t\tcall\t_writeln_char\n");
+			} 
+			break;
+		}
+		case ATTR_NONE:{
+			printf("WRITE NONE!\n");
+			if(isWrite){
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
+				CODE_OUTPUT("\t\tpushl\t%ebp\n");
+				CODE_OUTPUT("\t\tcall\t_write_int\n");
+			} else {
+				CODE_OUTPUT("\t\tpushl\t%eax\n");
+				CODE_OUTPUT("\t\tpushl\t%ebp\n");
+				CODE_OUTPUT("\t\tcall\t_writeln_int\n");
+			}
+			break;
+		}
 
+		default:{
+			printf("WRITE DEFAULT!\n");
+		}
+	}
+	CODE_OUTPUT("\t\taddl\t$8,%esp\n");
+}
 
 void CGOutput(pTree node){
 	generateCode(node->child[3],10);
+	if(node->child[3]->child[0]!=NULL)
+		printf("WARNING: Too many arguments to output\n");
 	switch(node->child[3]->attr){
 		case ATTR_ENUM:
 		case ATTR_BOOL:
@@ -936,17 +1022,6 @@ void CGOutput(pTree node){
 		}
 		case ATTR_REAL:{
 			printf("ERROR: we can't output real number yet.\n");
-			// if(strcmp("write",node->child[1]->data.stringVal)==0){
-			// 	CODE_OUTPUT("\t\tpushl\t%eax\n");
-			// 	CODE_OUTPUT("\t\tpushl\t%ebp\n");
-			// 	CODE_OUTPUT("\t\tcall\t_write_int\n");
-			// } else if (strcmp("writeln",node->child[1]->data.stringVal)==0){
-			// 	CODE_OUTPUT("\t\tpushl\t%eax\n");
-			// 	CODE_OUTPUT("\t\tpushl\t%ebp\n");
-			// 	CODE_OUTPUT("\t\tcall\t_writeln_int\n");
-			// } else {
-				
-			// }
 			break;
 		}
 		case ATTR_STRING:{
@@ -994,6 +1069,7 @@ void CGOutput(pTree node){
 		}
 	}
 	CODE_OUTPUT("\t\taddl\t$8,%esp\n");
+	gointToOutput = 0;
 }
 
 
@@ -1073,6 +1149,9 @@ void generateCode(pTree node,int space){
 		
 		case tSUB_ROUTINE : 	{
 			printf("tSUB_ROUTINE:\n");
+			
+			generateCode(node->child[1],0);
+			emit_function_begin2();
 			generateCode(node->child[2],23);
 			if(node->child[0]!=NULL)
 				generateCode(node->child[0],space+1);
@@ -1096,8 +1175,8 @@ void generateCode(pTree node,int space){
 			printf("FUNCTION_DECL\n"); 
 			enter_field(node->symtab);
 
-			generateCode(node->child[1],space+1);
-			generateCode(node->child[2],space+1);
+			generateCode(node->child[1],space+1);		//FUNCTION_HEAD
+			generateCode(node->child[2],space+1);		//tSUB_ROUTINE
 			emit_function_end();
 			leave_field();
 			if(node->child[0]!=NULL)
