@@ -14,8 +14,8 @@ int main(int argc,char const * argv[]) {
 		file = fopen("hello.pas", "r");
 	initSymTabStack();
 	pTree p = parse(file);
-	pTree dag = traverse(p);
 	traverseSyntaxTree(p);
+	pTree dag = traverse(p);
 	CG_main(p,"result.s");
 	return 0;
 }

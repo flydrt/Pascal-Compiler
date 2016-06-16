@@ -5,9 +5,91 @@
 _main:
 		pushl	%ebp
 		movl	%esp,%ebp
-		movl	$1,%eax
-		movl	%eax,a0
-		xorl	$1,%eax
+		leal	a0,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_read_int
+		addl	$8,%esp
+		movl	$97,%eax
+		movl	%eax,b1
+		movl	str_0,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_write_string
+		addl	$8,%esp
+		movl	a0,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_abs_int
+		addl	$8, %esp
+		pushl	%eax
+		pushl	%ebp
+		call	_writeln_int
+		addl	$8,%esp
+		movl	str_1,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_write_string
+		addl	$8,%esp
+		movl	a0,%eax
+		addl	$1,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_writeln_int
+		addl	$8,%esp
+		movl	str_2,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_write_string
+		addl	$8,%esp
+		movl	b1,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_writeln_int
+		addl	$8,%esp
+		movl	str_3,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_write_string
+		addl	$8,%esp
+		movl	a0,%eax
+		movl	$0,%edx
+		subl	%eax,%edx
+		movl	%edx,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_writeln_char
+		addl	$8,%esp
+		movl	str_4,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_write_string
+		addl	$8,%esp
+		movl	a0,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_writeln_int
+		addl	$8,%esp
+		movl	str_5,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_write_string
+		addl	$8,%esp
+		movl	a0,%eax
+		subl	$1,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_writeln_int
+		addl	$8,%esp
+		movl	str_6,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_write_string
+		addl	$8,%esp
+		movl	a0,%eax
+		pushl	%eax
+		popl	%edx
+		imul	%edx,%eax
 		pushl	%eax
 		pushl	%ebp
 		call	_writeln_int
@@ -23,4 +105,5 @@ _start:
 		int $sys_call_id
 
 #bss section
+		.comm	b1,4,4
 		.comm	a0,4,4

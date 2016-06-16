@@ -8,7 +8,11 @@ end;
 begin
 	b := b + 1;
 	inner(b);
-	b := b + 2;
+	b := b * 2;
+	inner(b);
+	b := b div 2;
+	inner(b);
+	b := b - 2;
 	test := b;
 end;
 begin

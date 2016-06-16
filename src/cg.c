@@ -57,6 +57,7 @@ void CGFactorFunc(pTree);
 void CGFactorSysFunc(pTree);
 void CGFactorRecord(pTree);
 void CGFactorNot(pTree);
+void CGFactorMinus(pTree);
 
 void CGFor(pTree);
 void CGCompare(pTree);
@@ -692,6 +693,15 @@ void CGFactorRecord(pTree node){
 	CODE_OUTPUT("\t\tpushl\t%eax\n");
 	CODE_OUTPUT("\t\tpopl\t%ebx\n");
 	CODE_OUTPUT("\t\tmovl\t(%ebx),%eax\n");
+}
+
+void CGFactorMinus(pTree node){
+	
+	generateCode(node->child[1],0);
+	CODE_OUTPUT("\t\tmovl\t$0,%edx\n");
+	CODE_OUTPUT("\t\tsubl\t%eax,%edx\n");
+	CODE_OUTPUT("\t\tmovl\t%edx,%eax\n");
+
 }
 
 void CGFactorArray(pTree node){
@@ -1378,7 +1388,11 @@ void generateCode(pTree node,int space){
  			CGFactorNot(node);
  			break;
  		}
- 		case FACTOR_MINUS: 		printf("FACTOR_MINUS\n");break;
+ 		case FACTOR_MINUS: 		{
+ 			printf("FACTOR_MINUS\n");
+ 			CGFactorMinus(node);
+ 			break;
+ 		}
  		case FACTOR_ARRAY: 		{
  			printf("FACTOR_ARRAY\n");
  			CGFactorArray(node);
