@@ -1265,7 +1265,7 @@ pSymNode newEmptySymbol() {
 	result->link->last = NULL;
 	result->needWrite = 1;
 	result->isReturn = 0;
-	result->offset = 0;
+	result->offset = -1;
 	return result;
 }
 

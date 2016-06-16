@@ -216,6 +216,9 @@ int calSize(pSymNode node){
 void insertBss(pSymNode node){
 	if(node == NULL)
 		return;
+	if(node->attr == ATTR_ENUM && node->offset >= 0)
+		return;
+	
 	int i = 0,flag = 0;
 	for(;i < MAXLIST; i++){
 		if( bssList.symList[i] != NULL && strcmp(bssList.symList[i]->rname,node->rname) == 0){
@@ -287,6 +290,8 @@ void writeData(){
 
 	int i = 0;
 	for(;i < dataCnt; i++){
+		if(strcmp(dataList[i].rname,"")==0)
+			continue;
 		fprintf(dataFile, ".globl %s\n", dataList[i].rname);
 		DATA_OUTPUT("\t\t.section .rodata\n");
 		DATA_OUTPUT("\t\t.align 4\n");
@@ -427,7 +432,8 @@ void CGStmtAssign(pTree node,int space){
 	//store the value in %edx
 	generateCode(node->child[2],space+1);		 
 	
-	if(symnode->attr == ATTR_INTEGER || symnode->attr == ATTR_BOOL || symnode->attr == ATTR_CHAR)
+	if(symnode->attr == ATTR_INTEGER || symnode->attr == ATTR_BOOL ||
+	 symnode->attr == ATTR_CHAR || symnode->attr == ATTR_ENUM)
 		fprintf(codeFile,"\t\tmovl\t%%eax,%s\n",symnode->rname);
 
 }
@@ -574,8 +580,8 @@ void CGCaseExprConst(pTree node){
 void CGCaseExprId(pTree node){
 	char case_end[100];
 	sprintf(case_end,"case_%s",CGGetLabel());
+
 	generateCode(node->child[1],0);
-	
 	CODE_OUTPUT("\t\tpopl\t%edx\n");
 	CODE_OUTPUT("\t\tcmpl\t%edx,%eax\n");
 	CODE_OUTPUT("\t\tpushl\t%edx\n");
@@ -849,6 +855,10 @@ void CGHandleVar(pTree node){
 				CGloadAddress(symnode);
 				CODE_OUTPUT("\t\tpushl\t%eax\n");
 
+			} else if (symnode->attr == ATTR_ENUM){
+				int value = CGGetEnumValue(symnode);
+				if(value >= 0)
+					fprintf(codeFile, "\t\tmovl\t$%d,%%eax\n",value);
 			}
 			break;
 		}
@@ -860,8 +870,7 @@ void CGFactorId(pTree node){
 	int level;
 	pSymNode symnode = searchIDWithinScope(node->data.stringVal
 		, currentStack.stack[currentStack.top - 1], &level);
-	if(symnode->attr != ATTR_ENUM)
-		insertBss(symnode);
+	insertBss(symnode);
 	switch(symnode->attr){
 		case ATTR_BOOL:
 		case ATTR_INTEGER:{
@@ -880,13 +889,15 @@ void CGFactorId(pTree node){
 		case ATTR_STRING:break;
 		case ATTR_ENUM:{
 			int value = CGGetEnumValue(symnode);
-			fprintf(codeFile, "\t\tmovl\t$%d,%%eax\n",value);
+			if(value >= 0)
+				fprintf(codeFile, "\t\tmovl\t$%d,%%eax\n",value);
+			else
+				fprintf(codeFile, "\t\tmovl\t%s,%%eax\n",symnode->rname);
 			
 			break;
 		}
 		case ATTR_NONE:{
 			printf("FACTOR_ID_NONE: %s\n",node->data.stringVal);
-			
 			break;
 		}
 		default:printf("FACTOR_ID_DEFAULT\n"); break;

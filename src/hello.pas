@@ -1,27 +1,17 @@
 program helloworld;
-var a:integer;
-function test(b:integer):integer;
-var a:integer;
-begin
-	if b > 0 
-	then begin
-		writeln(b);
-		b := b - 1;
-		a := test(b);
-	end
-	else begin
-		test:=a;
-	end;
-end;
-
-procedure outer(x:integer);
-var a:integer;
+type color=(red,yellow,green);
+var a,c:integer;b:color;
 begin
 	read(a);
-	a := a + x;
-	a := test(a);
-end;
-begin
-	a := 1;
-	outer(a);
+	b := red;
+	case a of
+		1: b := red;
+		2: b := yellow;
+		3: b := green;
+	end;
+	case b of
+		red: writeln('red'); 
+		green: writeln('green');
+		yellow: writeln('yellow');
+	end;
 end.

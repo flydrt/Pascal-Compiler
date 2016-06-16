@@ -3,77 +3,37 @@ exit_syscall = 0x1
 
 .data
 
+.globl str_0
+		.section .rodata
+		.align 4
+.LCstr_0:
+		.string "red"
+		.data
+		.align 4
+		.type str_0 @object
+str_0:
+		.long .LCstr_0
+.globl str_1
+		.section .rodata
+		.align 4
+.LCstr_1:
+		.string "green"
+		.data
+		.align 4
+		.type str_1 @object
+str_1:
+		.long .LCstr_1
+.globl str_2
+		.section .rodata
+		.align 4
+.LCstr_2:
+		.string "yellow"
+		.data
+		.align 4
+		.type str_2 @object
+str_2:
+		.long .LCstr_2
 
-# test16 function
-.text
-.global test16
-		.type	test16,@function
-test16:
-		pushl	%ebp
-		movl	%esp,%ebp
-		subl	$8,%esp
-		movl	12(%ebp),%eax
-		pushl	%eax
-		movl	$0,%eax
-		popl	%edx
-		cmpl	%eax,%edx
-		movl	$1,%eax
-		jg	j_LABEL2
-		xorl	%eax,%eax
-j_LABEL2:
-		cmpl	$1,%eax
-		jl	if_else_LABEL0
-		movl	12(%ebp),%eax
-		pushl	%eax
-		pushl	%ebp
-		call	_writeln_int
-		addl	$8,%esp
-		movl	12(%ebp),%eax
-		pushl	%eax
-		movl	$1,%eax
-		popl	%edx
-		subl	%eax,%edx
-		movl	%edx,%eax
-		movl	%eax,12(%ebp)
-		movl	12(%ebp),%eax
-		pushl	%eax
-		pushl	%ebp
-		call	test16
-		addl	$8,%esp
-		movl	%eax,a0
-		jmp	if_exit_LABEL1
-if_else_LABEL0:
-		movl	%eax,-4(%ebp)
-if_exit_LABEL1:
-		leave
-		ret
-# outer15 function
-.text
-.global outer15
-		.type	outer15,@function
-outer15:
-		pushl	%ebp
-		movl	%esp,%ebp
-		subl	$8,%esp
-		leal	a6,%eax
-		pushl	%eax
-		pushl	%ebp
-		call	_read_int
-		addl	$8,%esp
-		movl	a6,%eax
-		pushl	%eax
-		movl	12(%ebp),%eax
-		popl	%edx
-		addl	%edx,%eax
-		movl	%eax,a6
-		movl	a6,%eax
-		pushl	%eax
-		pushl	%ebp
-		call	test16
-		addl	$8,%esp
-		movl	%eax,a6
-		leave
-		ret
 # main routine
 .text
 .global _main
@@ -81,13 +41,74 @@ outer15:
 _main:
 		pushl	%ebp
 		movl	%esp,%ebp
-		movl	$1,%eax
-		movl	%eax,a13
-		movl	a13,%eax
+		leal	a0,%eax
 		pushl	%eax
 		pushl	%ebp
-		call	outer15
+		call	_read_int
 		addl	$8,%esp
+		movl	$0,%eax
+		movl	%eax,b1
+		movl	a0,%eax
+		pushl	%eax
+		movl	$1,%eax
+		popl	%edx
+		cmpl	%edx,%eax
+		pushl	%edx
+		jne	case_LABEL0
+		movl	$0,%eax
+		movl	%eax,b1
+case_LABEL0:
+		movl	$2,%eax
+		popl	%edx
+		cmpl	%edx,%eax
+		pushl	%edx
+		jne	case_LABEL1
+		movl	$1,%eax
+		movl	%eax,b1
+case_LABEL1:
+		movl	$3,%eax
+		popl	%edx
+		cmpl	%edx,%eax
+		pushl	%edx
+		jne	case_LABEL2
+		movl	$2,%eax
+		movl	%eax,b1
+case_LABEL2:
+		movl	b1,%eax
+		pushl	%eax
+		movl	$0,%eax
+		popl	%edx
+		cmpl	%edx,%eax
+		pushl	%edx
+		jne	case_LABEL3
+		movl	str_0,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_writeln_string
+		addl	$8,%esp
+case_LABEL3:
+		movl	$2,%eax
+		popl	%edx
+		cmpl	%edx,%eax
+		pushl	%edx
+		jne	case_LABEL4
+		movl	str_1,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_writeln_string
+		addl	$8,%esp
+case_LABEL4:
+		movl	$1,%eax
+		popl	%edx
+		cmpl	%edx,%eax
+		pushl	%edx
+		jne	case_LABEL5
+		movl	str_2,%eax
+		pushl	%eax
+		pushl	%ebp
+		call	_writeln_string
+		addl	$8,%esp
+case_LABEL5:
 		leave
 		ret
 
@@ -100,5 +121,4 @@ _start:
 
 #bss section
 		.comm	a0,4,4
-		.comm	a6,4,4
-		.comm	a13,4,4
+		.comm	b1,4,4
