@@ -1122,8 +1122,8 @@ void CGInput(pTree node){
 
 
 void generateCode(pTree node,int space){
-	for(int i = 0;i < space; i++)
-		printf("-");
+	// for(int i = 0;i < space; i++)
+	// 	printf("-");
 	switch(node->type){
 		case tPROGRAM:			{
 			enter_field(node->symtab);
