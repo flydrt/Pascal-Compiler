@@ -139,12 +139,23 @@ pTree find_node(Type type,int num,pTree child0,pTree child1,pTree child2,pTree c
             }
             
         }
-    p = new_node(type,num,child0,child1,child2,child3,child4,parent);
-    //printf("add,,,%d\n",num);
-    p->hlink = hash[i];
-    hash[i] = p;
+    //p = new_node(type,num,child0,child1,child2,child3,child4,parent);
+    struct dag *new_dag;
+    new_dag = (struct dag*)malloc(sizeof(struct dag));
+    new_dag->hlink = NULL;
+    new_dag->node = parent;
     
-    return p->node;
+    
+    //printf("add,,,%d\n",num);
+    if(hash[i]==NULL)
+        hash[i] = new_dag;
+    else{
+        new_dag->hlink = hash[i];
+        hash[i] = new_dag;
+    }
+    
+    
+    return parent;
 }
 
 struct dag *new_node(Type type,int num,pTree child0,pTree child1,pTree child2,pTree child3,pTree child4,pTree parent){
