@@ -1040,12 +1040,17 @@ void generateCode(pTree node,int space){
 				generateCode(node->child[3],space+1);
 			if(node->child[4]!=NULL)
 				generateCode(node->child[4],space+1);
+			if(node->child[0]!=NULL)
+				generateCode(node->child[0],space+1);
 			break;
+
 		}
 		
 		case tSUB_ROUTINE : 	{
 			printf("tSUB_ROUTINE:\n");
 			generateCode(node->child[2],23);
+			if(node->child[0]!=NULL)
+				generateCode(node->child[0],space+1);
 			break;
 		}
 		
@@ -1070,6 +1075,8 @@ void generateCode(pTree node,int space){
 			generateCode(node->child[2],space+1);
 			emit_function_end();
 			leave_field();
+			if(node->child[0]!=NULL)
+				generateCode(node->child[0],space+1);
 			break;
 		}
 		case FUNCTION_HEAD: 	{
