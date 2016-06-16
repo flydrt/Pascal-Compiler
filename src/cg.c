@@ -177,12 +177,9 @@ void changeParmName(pTree node,int argc){
 	int level;
 	pSymNode symnode = searchIDWithinScope(node->data.stringVal
 		, currentStack.stack[currentStack.top - 1], &level);
-	//printf("name: %s\n",symnode->rname);
 	sprintf(symnode->rname,"%d(%%ebp)",argc * 4 + 8);
-	//printf("name: %s\n",symnode->rname);
 	symnode->needWrite = 0;
 	if(node->child[0]!=NULL){
-		//printf("HAVE CHILD: %s \n",node->child[0]->data.stringVal);
 		changeParmName(node->child[0],argc-1);
 	}
 }
@@ -227,7 +224,6 @@ void insertBss(pSymNode node){
 		}
 	}
 	if(!flag){
-
 		int size = calSize(node);
 		node->size = size;
 		pSymNode tmp = (pSymNode)malloc(sizeof(struct symNode));
@@ -259,10 +255,12 @@ void writeBss(){
 			}
 			case ATTR_ARRAY:{
 				fprintf(codeFile,"\t\t.comm\t%s,%d,4\n",bssList.symList[i]->rname,bssList.symList[i]->size);
+				break;
 			}
 			case ATTR_RECORD:{
 				//printf("write data record\n");
 				fprintf(codeFile,"\t\t.comm\t%s,%d,4\n",bssList.symList[i]->rname,bssList.symList[i]->size);
+				break;
 			}
 			case ATTR_REAL:break;
 			case ATTR_CHAR:fprintf(codeFile,"\t\t.comm\t%s,4,4\n",bssList.symList[i]->rname);
@@ -898,10 +896,22 @@ void CGFactorId(pTree node){
 			break;
 		}
 		case ATTR_NONE:{
-			printf("FACTOR_ID_NONE: %s\n",node->data.stringVal);
+			printf("ERROR: FACTOR_ID_NONE: %s\n",node->data.stringVal);
 			break;
 		}
-		default:printf("FACTOR_ID_DEFAULT\n"); break;
+		case ATTR_ARRAY:{
+			//printf("ATTR_ARRAY%s\n", symnode->rname);
+			if(!symnode->needWrite)
+				fprintf(codeFile, "\t\tmovl\t%s,%%eax\n",symnode->rname);
+			else
+				fprintf(codeFile, "\t\tleal\t%s,%%eax\n",symnode->rname);
+			break;
+		}
+		default:{
+			printf("FACTOR_ID_DEFAULT\n"); 
+			//CODE_OUTPUT("#----------\n");
+			break;
+		}
 	}
 	
 }
@@ -988,7 +998,10 @@ void CGOutput(pTree node){
 
 
 void CGloadAddress(pSymNode symnode){
-	fprintf(codeFile, "\t\tleal\t%s,%%eax\n",symnode->rname);
+	if(!symnode->needWrite)
+		fprintf(codeFile, "\t\tmovl\t%s,%%eax\n", symnode->rname);
+	else
+		fprintf(codeFile, "\t\tleal\t%s,%%eax\n",symnode->rname);
 }
 
 void CGInput(pTree node){
@@ -1285,6 +1298,8 @@ void generateCode(pTree node,int space){
  		case PROC_STMT_ID_ARGS: {
  			printf("PROC_STMT_ID_ARGS\n");
  			CGProcStmtIdArgs(node);
+ 			if(node->child[0] != NULL)
+ 				generateCode(node->child[0],space+1);
  			break;
  		}
  		case PROC_STMT_SYS_EXPR:{				//writeln, write

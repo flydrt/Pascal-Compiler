@@ -19,10 +19,12 @@ procedure outer(x,y:integer);
 var a:integer;
 begin
 	a := x * y;
+	write('The a of outer: ');
 	writeln(a);
 	a := test(a);
 end;
 begin
+	write('Input a : ');
 	read(a);
 	b := red;
 	case a of
@@ -31,9 +33,9 @@ begin
 		3: b := green;
 	end;
 	case b of
-		red: writeln('red'); 
-		green: writeln('green');
-		yellow: writeln('yellow');
+		red: c:= 5;
+		green: c:=6;
+		yellow: c:=7;
 	end;
-	writeln('The calculate end:');
+	outer(a,c);
 end.

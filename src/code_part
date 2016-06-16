@@ -1,64 +1,25 @@
-# test34 function
+# test12 function
 .text
-.global test34
-		.type	test34,@function
-test34:
+.global test12
+		.type	test12,@function
+test12:
 		pushl	%ebp
 		movl	%esp,%ebp
 		subl	$8,%esp
 		movl	12(%ebp),%eax
 		pushl	%eax
-		movl	$0,%eax
+		movl	$2,%eax
+		subl	$1,%eax
+		movl	$4,%ecx
+		imul	%ecx
 		popl	%edx
-		cmpl	%eax,%edx
-		movl	$1,%eax
-		jg	j_LABEL2
-		xorl	%eax,%eax
-j_LABEL2:
-		cmpl	$1,%eax
-		jl	if_else_LABEL0
-		movl	12(%ebp),%eax
+		addl	%eax,%edx
+		pushl	%edx
+		popl	%ebx
+		movl	(%ebx),%eax
 		pushl	%eax
 		pushl	%ebp
 		call	_writeln_int
-		addl	$8,%esp
-		movl	12(%ebp),%eax
-		pushl	%eax
-		movl	$1,%eax
-		popl	%edx
-		subl	%eax,%edx
-		movl	%edx,%eax
-		movl	%eax,12(%ebp)
-		movl	12(%ebp),%eax
-		pushl	%eax
-		pushl	%ebp
-		call	test34
-		addl	$8,%esp
-		movl	%eax,a0
-		jmp	if_exit_LABEL1
-if_else_LABEL0:
-		movl	%eax,-4(%ebp)
-if_exit_LABEL1:
-		leave
-		ret
-# outer32 function
-.text
-.global outer32
-		.type	outer32,@function
-outer32:
-		pushl	%ebp
-		movl	%esp,%ebp
-		subl	$8,%esp
-		movl	16(%ebp),%eax
-		pushl	%eax
-		movl	12(%ebp),%eax
-		popl	%edx
-		imul	%edx,%eax
-		movl	%eax,a12
-		movl	str_0,%eax
-		pushl	%eax
-		pushl	%ebp
-		call	_write_string
 		addl	$8,%esp
 		leave
 		ret
@@ -69,16 +30,34 @@ outer32:
 _main:
 		pushl	%ebp
 		movl	%esp,%ebp
-		movl	$1,%eax
-		movl	%eax,a26
-		movl	$2,%eax
-		movl	%eax,c28
-		movl	a26,%eax
+		leal	a8,%eax
 		pushl	%eax
-		movl	c28,%eax
+		movl	$1,%eax
+		subl	$1,%eax
+		movl	$4,%ecx
+		imul	%ecx
+		popl	%edx
+		addl	%eax,%edx
+		pushl	%edx
+		movl	$1,%eax
+		popl	%ebx
+		movl	%eax,(%ebx)
+		leal	a8,%eax
+		pushl	%eax
+		movl	$2,%eax
+		subl	$1,%eax
+		movl	$4,%ecx
+		imul	%ecx
+		popl	%edx
+		addl	%eax,%edx
+		pushl	%edx
+		movl	$2,%eax
+		popl	%ebx
+		movl	%eax,(%ebx)
+		leal	a8,%eax
 		pushl	%eax
 		pushl	%ebp
-		call	outer32
+		call	test12
 		addl	$8,%esp
 		leave
 		ret
@@ -91,7 +70,4 @@ _start:
 		int $sys_call_id
 
 #bss section
-		.comm	a0,4,4
-		.comm	a12,4,4
-		.comm	a26,4,4
-		.comm	c28,4,4
+		.comm	a8,40,4
