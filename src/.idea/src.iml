@@ -5,8 +5,8 @@
       <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/error.c" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/error.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/fronttest.c" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/lex.yy.c" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/main.c" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/symNodeType.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/symtab.c" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/symtab.h" isTestSource="false" />

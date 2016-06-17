@@ -15,7 +15,7 @@ int main() {
 
 //	printSymTab(symTabStack.top);
 
-	printf("Error number: %d\n", errorno);
+//	printf("Error number: %d\n", errorno);
 
 	return 0;
 }

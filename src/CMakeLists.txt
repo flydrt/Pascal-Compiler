@@ -7,7 +7,7 @@ set(SOURCE_FILES
     error.c
     error.h
     lex.yy.c
-    main.c
+    fronttest.c
     symNodeType.h
     symtab.c
     symtab.h
