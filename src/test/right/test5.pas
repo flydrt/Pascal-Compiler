@@ -2,7 +2,7 @@ program helloworld;
 var a:integer;b:char;
 begin
 	read(a);
-	b := a;
+	b := 'a';
 	write('abs:');
 	writeln(abs(a));
 	write('succ:');
