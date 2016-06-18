@@ -3,24 +3,4 @@ exit_syscall = 0x1
 
 .data
 
-.globl str_0
-		.section .rodata
-		.align 4
-.LCstr_0:
-		.string "The a of outer: "
-		.data
-		.align 4
-		.type str_0 @object
-str_0:
-		.long .LCstr_0
-.globl str_1
-		.section .rodata
-		.align 4
-.LCstr_1:
-		.string "Input a : "
-		.data
-		.align 4
-		.type str_1 @object
-str_1:
-		.long .LCstr_1
 
